@@ -1,0 +1,40 @@
+import Foundation
+
+actor BackgroundUploadManager {
+    struct Payload: Sendable {
+        let submissionId: UUID
+        let target: CommentRelaySubmissionReceipt.UploadTarget
+        let data: Data
+        let contentType: String
+    }
+
+    private let transport: UploadTransport
+    private let finalizeHandler: @Sendable (UUID) async throws -> Void
+    private var inFlight: [UUID: Set<String>] = [:]
+
+    init(transport: UploadTransport, finalize: @escaping @Sendable (UUID) async throws -> Void) {
+        self.transport = transport
+        self.finalizeHandler = finalize
+    }
+
+    func enqueue(_ payloads: [Payload]) async throws {
+        let grouped = Dictionary(grouping: payloads, by: { $0.submissionId })
+        for (subId, group) in grouped {
+            inFlight[subId] = Set(group.map { $0.target.fileName })
+            for payload in group {
+                do {
+                    try await transport.put(data: payload.data, to: payload.target.uploadUrl, contentType: payload.contentType)
+                    inFlight[subId]?.remove(payload.target.fileName)
+                } catch {
+                    throw CommentRelayError.uploadFailed(submissionId: subId,
+                                                         fileName: payload.target.fileName,
+                                                         underlying: error)
+                }
+            }
+            if inFlight[subId]?.isEmpty == true {
+                inFlight.removeValue(forKey: subId)
+                try await finalizeHandler(subId)
+            }
+        }
+    }
+}
