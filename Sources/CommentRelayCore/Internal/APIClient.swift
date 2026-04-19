@@ -27,8 +27,17 @@ struct APIClient: Sendable {
         }
     }
 
-    func send<Response: Decodable>(method: String, path: String, body: Data? = nil, userIdentifier: String? = nil, decodingAs: Response.Type, decoder: JSONDecoder = APIClient.defaultDecoder()) async throws -> Response {
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+    func send<Response: Decodable>(method: String, path: String, queryItems: [URLQueryItem]? = nil, body: Data? = nil, userIdentifier: String? = nil, decodingAs: Response.Type, decoder: JSONDecoder = APIClient.defaultDecoder()) async throws -> Response {
+        let rawURL = baseURL.appendingPathComponent(path)
+        let finalURL: URL
+        if let queryItems, !queryItems.isEmpty {
+            var components = URLComponents(url: rawURL, resolvingAgainstBaseURL: false) ?? URLComponents()
+            components.queryItems = queryItems
+            finalURL = components.url ?? rawURL
+        } else {
+            finalURL = rawURL
+        }
+        var request = URLRequest(url: finalURL)
         request.httpMethod = method
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

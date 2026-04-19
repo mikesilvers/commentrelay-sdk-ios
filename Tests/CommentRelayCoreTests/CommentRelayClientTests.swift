@@ -26,9 +26,7 @@ final class CommentRelayClientTests: XCTestCase {
             return (response, Data())
         }
 
-        let client = CommentRelayClient(
-            baseURL: URL(string: "http://localhost:3000")!,
-            session: session)
+        let client = try await makeClient()
         _ = try await client.ping()
 
         XCTAssertEqual(MockURLProtocol.requests.count, 1)
@@ -45,9 +43,7 @@ final class CommentRelayClientTests: XCTestCase {
             return (response, Data())
         }
 
-        let client = CommentRelayClient(
-            baseURL: URL(string: "http://localhost:3000")!,
-            session: session)
+        let client = try await makeClient()
         let ok = try await client.ping()
 
         XCTAssertTrue(ok)
@@ -61,21 +57,17 @@ final class CommentRelayClientTests: XCTestCase {
             return (response, Data())
         }
 
-        let client = CommentRelayClient(
-            baseURL: URL(string: "http://localhost:3000")!,
-            session: session)
+        let client = try await makeClient()
         let ok = try await client.ping()
 
         XCTAssertFalse(ok)
     }
 
-    func test_ping_throws_onTransportError() async {
+    func test_ping_throws_onTransportError() async throws {
         struct BoomError: Error, Equatable {}
         MockURLProtocol.handler = { _ in throw BoomError() }
 
-        let client = CommentRelayClient(
-            baseURL: URL(string: "http://localhost:3000")!,
-            session: session)
+        let client = try await makeClient()
 
         do {
             _ = try await client.ping()
@@ -84,5 +76,39 @@ final class CommentRelayClientTests: XCTestCase {
             // URLSession wraps the underlying error; assert it surfaced.
             XCTAssertNotNil(error)
         }
+    }
+
+    private func makeClient(cacheDir: URL? = nil) async throws -> CommentRelayClient {
+        let dir = cacheDir ?? FileManager.default.temporaryDirectory.appendingPathComponent("crl-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let config = CommentRelayConfiguration(
+            baseURL: URL(string: "http://localhost:3000")!,
+            apiKey: "crk_test_abc",
+            userIdentifier: "test-user")
+        return CommentRelayClient(
+            configuration: config,
+            session: session,
+            cacheDirectory: dir,
+            keychainService: "crl.test.\(UUID().uuidString)")
+    }
+
+    func test_fetchConfig_returnsUpdatedPayload_andPersistsCache() async throws {
+        MockURLProtocol.handler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: nil)!
+            let body = #"{"current":false,"hash":"h1","categories":[]}"#
+            return (response, Data(body.utf8))
+        }
+        let client = try await makeClient()
+        let result = try await client.fetchConfig(cachedHash: nil)
+        guard case .updated(let hash, _) = result else { return XCTFail() }
+        XCTAssertEqual(hash, "h1")
+        // sending a second fetch with the same hash should hit the server with the hash query:
+        MockURLProtocol.reset()
+        MockURLProtocol.handler = { request in
+            XCTAssertTrue(request.url?.query?.contains("hash=h1") ?? false)
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: nil)!
+            return (response, Data(#"{"current":true}"#.utf8))
+        }
+        _ = try await client.fetchConfig(cachedHash: "h1")
     }
 }
