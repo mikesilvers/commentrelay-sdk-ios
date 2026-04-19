@@ -52,4 +52,20 @@ final class CommentRelayClientTests: XCTestCase {
 
         XCTAssertTrue(ok)
     }
+
+    func test_ping_returnsFalse_on500() async throws {
+        MockURLProtocol.handler = { request in
+            let response = HTTPURLResponse(
+                url: request.url!, statusCode: 500,
+                httpVersion: "HTTP/1.1", headerFields: nil)!
+            return (response, Data())
+        }
+
+        let client = CommentRelayClient(
+            baseURL: URL(string: "http://localhost:3000")!,
+            session: session)
+        let ok = try await client.ping()
+
+        XCTAssertFalse(ok)
+    }
 }
