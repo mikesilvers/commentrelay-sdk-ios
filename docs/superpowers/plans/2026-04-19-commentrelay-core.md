@@ -6,7 +6,7 @@
 
 **Architecture:** Two SPM library products in one package. Plan A creates only `CommentRelayCore` (no SwiftUI). `CommentRelayClient` becomes an `actor` that owns the injected configuration, wraps an internal `APIClient`, and coordinates `ConfigCache`, `SessionStore`, `DraftStore`, `BackgroundUploadManager`, and a 403 circuit-breaker.
 
-**Tech Stack:** Swift 5.9, Foundation, URLSession, Security (Keychain), `os.Logger`. `swift-tools-version: 5.9`. Minimum iOS 18 / macOS 15. No third-party runtime deps. Tests use XCTest + existing `MockURLProtocol`.
+**Tech Stack:** Swift 6 (strict concurrency enabled), Foundation, URLSession, Security (Keychain), `os.Logger`. `swift-tools-version: 6.0` (required for `.iOS(.v18)` / `.macOS(.v15)` platform constants). Minimum iOS 18 / macOS 15. No third-party runtime deps. Tests use XCTest + existing `MockURLProtocol`.
 
 **Out of scope for Plan A:** SwiftUI views, launchers, field renderers, theme, snapshot tests, localized `.strings` files (wiring is present; resources ship with Plan B's `CommentRelayUI` bundle), sample app UI expansion beyond the import-path update.
 
@@ -93,7 +93,7 @@ git mv Sources/CommentRelayCore/CommentRelayClient.swift Sources/CommentRelayCor
 - [ ] **Step 2: Overwrite `Package.swift`:**
 
 ```swift
-// swift-tools-version: 5.9
+// swift-tools-version: 6.0
 import PackageDescription
 
 let package = Package(
@@ -111,6 +111,8 @@ let package = Package(
     ]
 )
 ```
+
+**Note on `swift-tools-version: 6.0`:** `.iOS(.v18)` and `.macOS(.v15)` were introduced alongside PackageDescription 6.0 (Xcode 16 / Swift 6), so the minimums the spec requires force tools 6.0. Tools 6.0 also enables Swift 6 strict concurrency package-wide by default — every `static var` and cross-actor reference in later tasks is checked. `MockURLProtocol`'s mutable static state is intentionally annotated `nonisolated(unsafe)` because tests run serially.
 
 - [ ] **Step 3: Update test imports.** Replace `@testable import CommentRelay` with `@testable import CommentRelayCore` in both `Tests/CommentRelayCoreTests/CommentRelayClientTests.swift` and `Tests/CommentRelayCoreTests/CommentRelayTests.swift`.
 
