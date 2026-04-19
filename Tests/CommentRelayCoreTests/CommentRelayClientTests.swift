@@ -132,4 +132,25 @@ final class CommentRelayClientTests: XCTestCase {
         }
         _ = try await client.fetchConfig(cachedHash: "h1")
     }
+
+    func test_finalize_postsEmptyBodyAndReturnsVoidOn200() async throws {
+        MockURLProtocol.handler = { request in
+            XCTAssertTrue(request.url?.path.hasSuffix("/finalize") ?? false)
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: nil)!
+            return (response, Data(#"{"submissionId":"11111111-1111-1111-1111-111111111111","status":"complete"}"#.utf8))
+        }
+        let client = try await makeClient()
+        try await client.finalize(submissionId: UUID(uuidString: "11111111-1111-1111-1111-111111111111")!)
+    }
+
+    func test_fetchHistory_passesUserIdentifierHeader_anonymousFalse() async throws {
+        MockURLProtocol.handler = { request in
+            XCTAssertEqual(request.value(forHTTPHeaderField: "x-user-identifier"), "test-user")
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: nil)!
+            return (response, Data(#"{"submissions":[]}"#.utf8))
+        }
+        let client = try await makeClient()
+        let h = try await client.fetchHistory()
+        XCTAssertFalse(h.isAnonymous)
+    }
 }

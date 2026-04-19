@@ -75,6 +75,41 @@ public actor CommentRelayClient {
         try await submit(submission)
     }
 
+    public func finalize(submissionId: UUID) async throws {
+        try ensureEnabled()
+        struct FinalizeResponse: Decodable { let submissionId: UUID; let status: String }
+        do {
+            _ = try await api.send(
+                method: "POST",
+                path: "sdk/v1/submissions/\(submissionId.uuidString.lowercased())/finalize",
+                body: Data("{}".utf8),
+                decodingAs: FinalizeResponse.self)
+        } catch let err as CommentRelayError {
+            if case .conflict = err { return }   // already finalized is idempotent
+            if case .forbidden = err { disable() }
+            throw err
+        }
+    }
+
+    public func fetchHistory() async throws -> CommentRelayHistory {
+        try ensureEnabled()
+        let effective = sessionStore.effectiveIdentifier
+        do {
+            return try await api.send(
+                method: "GET",
+                path: "sdk/v1/history",
+                userIdentifier: effective,
+                decodingAs: CommentRelayHistory.self)
+        } catch let err as CommentRelayError {
+            if case .forbidden = err { disable() }
+            throw err
+        }
+    }
+
+    public func reset() {
+        isEnabled = true
+    }
+
     // MARK: - Internal helpers
 
     private func ensureEnabled() throws {
