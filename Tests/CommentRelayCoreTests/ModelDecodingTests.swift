@@ -43,4 +43,37 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(f.sortOrder, 1)
         XCTAssertNil(f.maxFiles)
     }
+
+    func test_category_decodesFullConfigPayload() throws {
+        let raw = #"""
+        {
+          "current": false,
+          "hash": "abc123",
+          "categories": [{
+            "id": "cat1",
+            "title": "Bug Report",
+            "show_in_picker": true,
+            "response_limit_count": 5,
+            "response_limit_type": "per_session",
+            "response_limit_window_days": null,
+            "more_feedback_prompt": "Tell us more",
+            "is_active": true,
+            "sort_order": 1,
+            "fields": []
+          }]
+        }
+        """#
+        let result = try decoder.decode(CommentRelayConfigResponse.self, from: Data(raw.utf8))
+        guard case .updated(let hash, let categories) = result else { return XCTFail() }
+        XCTAssertEqual(hash, "abc123")
+        XCTAssertEqual(categories.first?.id, "cat1")
+        XCTAssertEqual(categories.first?.title, "Bug Report")
+        XCTAssertEqual(categories.first?.responseLimitType, .perSession)
+    }
+
+    func test_category_decodesCurrentResponse() throws {
+        let raw = #"{"current":true}"#
+        let result = try decoder.decode(CommentRelayConfigResponse.self, from: Data(raw.utf8))
+        guard case .current = result else { return XCTFail() }
+    }
 }
