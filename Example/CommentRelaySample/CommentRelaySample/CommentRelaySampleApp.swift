@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CommentRelay
 
 @main
 struct CommentRelaySampleApp: App {

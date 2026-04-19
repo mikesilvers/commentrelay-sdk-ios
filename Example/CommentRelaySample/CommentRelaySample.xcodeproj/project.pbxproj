@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		124208BD2F9534950001DE82 /* CommentRelay in Frameworks */ = {isa = PBXBuildFile; productRef = 124208BC2F9534950001DE82 /* CommentRelay */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		124208AD2F952AFB0001DE82 /* CommentRelaySample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CommentRelaySample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				124208BD2F9534950001DE82 /* CommentRelay in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +70,7 @@
 			);
 			name = CommentRelaySample;
 			packageProductDependencies = (
+				124208BC2F9534950001DE82 /* CommentRelay */,
 			);
 			productName = CommentRelaySample;
 			productReference = 124208AD2F952AFB0001DE82 /* CommentRelaySample.app */;
@@ -94,6 +100,9 @@
 			);
 			mainGroup = 124208A42F952AFB0001DE82;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				124208BB2F9534950001DE82 /* XCLocalSwiftPackageReference "../.." */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 124208AE2F952AFB0001DE82 /* Products */;
 			projectDirPath = "";
@@ -351,6 +360,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		124208BB2F9534950001DE82 /* XCLocalSwiftPackageReference "../.." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../..";
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		124208BC2F9534950001DE82 /* CommentRelay */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CommentRelay;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 124208A52F952AFB0001DE82 /* Project object */;
 }
