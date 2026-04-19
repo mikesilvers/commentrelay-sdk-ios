@@ -153,4 +153,51 @@ final class CommentRelayClientTests: XCTestCase {
         let h = try await client.fetchHistory()
         XCTAssertFalse(h.isAnonymous)
     }
+
+    func test_uploadFiles_runsAllUploads_andTriggersFinalize() async throws {
+        actor PathRecorder { var paths: [String] = []; func record(_ p: String) { paths.append(p) }; func snapshot() -> [String] { paths } }
+        let recorder = PathRecorder()
+        MockURLProtocol.handler = { request in
+            let path = request.url?.path ?? ""
+            Task { await recorder.record(path) }
+            if request.url?.host == "s3.example.com" {
+                let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: nil)!
+                return (response, Data())
+            }
+            // finalize endpoint
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: nil)!
+            return (response, Data(#"{"submissionId":"11111111-1111-1111-1111-111111111111","status":"complete"}"#.utf8))
+        }
+        let client = try await makeClient()
+        let subId = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
+        let receipt = CommentRelaySubmissionReceipt(
+            submissionId: subId,
+            hasUploads: true,
+            uploadUrls: [.init(fieldId: "f", fileName: "a.png", uploadUrl: URL(string: "https://s3.example.com/u/a")!)])
+        let payload = CommentRelayFilePayload(
+            target: receipt.uploadUrls[0],
+            data: Data([1, 2, 3]),
+            contentType: "image/png")
+        try await client.uploadFiles(receipt: receipt, payloads: [payload])
+
+        // Give the Task inside the handler a moment to record.
+        try await Task.sleep(nanoseconds: 100_000_000)
+        let paths = await recorder.snapshot()
+        XCTAssertTrue(paths.contains("/u/a"))
+        XCTAssertTrue(paths.contains("/sdk/v1/submissions/\(subId.uuidString.lowercased())/finalize"))
+    }
+
+    func test_uploadFiles_skippedWhenReceiptHasNoUploads() async throws {
+        MockURLProtocol.handler = { request in
+            XCTFail("no network call expected when hasUploads == false")
+            let response = HTTPURLResponse(url: request.url!, statusCode: 500, httpVersion: "HTTP/1.1", headerFields: nil)!
+            return (response, Data())
+        }
+        let client = try await makeClient()
+        let receipt = CommentRelaySubmissionReceipt(
+            submissionId: UUID(),
+            hasUploads: false,
+            uploadUrls: [])
+        try await client.uploadFiles(receipt: receipt, payloads: [])
+    }
 }

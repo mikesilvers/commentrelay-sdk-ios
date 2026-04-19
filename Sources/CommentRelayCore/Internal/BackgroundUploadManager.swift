@@ -38,3 +38,12 @@ actor BackgroundUploadManager {
         }
     }
 }
+
+public struct CommentRelayFilePayload: Sendable {
+    public let target: CommentRelaySubmissionReceipt.UploadTarget
+    public let data: Data
+    public let contentType: String
+    public init(target: CommentRelaySubmissionReceipt.UploadTarget, data: Data, contentType: String) {
+        self.target = target; self.data = data; self.contentType = contentType
+    }
+}

@@ -8,6 +8,7 @@ public actor CommentRelayClient {
     private let configCache: ConfigCache
     private let sessionStore: SessionStore
     private let draftStore: DraftStore
+    nonisolated(unsafe) private var uploadManager: BackgroundUploadManager!
     private(set) public var isEnabled: Bool = true
 
     public init(configuration: CommentRelayConfiguration, session: URLSession = .shared) {
@@ -20,6 +21,12 @@ public actor CommentRelayClient {
         self.configCache = ConfigCache(directory: dir)
         self.sessionStore = SessionStore(service: "com.commentrelay.sdk.\(fingerprint)", hostSupplied: configuration.userIdentifier)
         self.draftStore = DraftStore(directory: dir.appendingPathComponent("drafts"))
+        // Finalize closure weakly captures self so the manager doesn't retain the client indefinitely.
+        let transport: UploadTransport = URLSessionUploadTransport(session: session)
+        self.uploadManager = BackgroundUploadManager(transport: transport) { [weak self] submissionId in
+            guard let self else { return }
+            try await self.finalize(submissionId: submissionId)
+        }
     }
 
     // Test-only escape hatch keeping the test suite hermetic.
@@ -33,6 +40,12 @@ public actor CommentRelayClient {
         self.configCache = ConfigCache(directory: cacheDirectory)
         self.sessionStore = SessionStore(service: keychainService, hostSupplied: configuration.userIdentifier)
         self.draftStore = DraftStore(directory: cacheDirectory.appendingPathComponent("drafts"))
+        // Finalize closure weakly captures self so the manager doesn't retain the client indefinitely.
+        let transport: UploadTransport = URLSessionUploadTransport(session: session)
+        self.uploadManager = BackgroundUploadManager(transport: transport) { [weak self] submissionId in
+            guard let self else { return }
+            try await self.finalize(submissionId: submissionId)
+        }
     }
 
     public func ping() async throws -> Bool {
@@ -86,6 +99,24 @@ public actor CommentRelayClient {
                 decodingAs: FinalizeResponse.self)
         } catch let err as CommentRelayError {
             if case .conflict = err { return }   // already finalized is idempotent
+            if case .forbidden = err { disable() }
+            throw err
+        }
+    }
+
+    public func uploadFiles(receipt: CommentRelaySubmissionReceipt,
+                            payloads: [CommentRelayFilePayload]) async throws {
+        try ensureEnabled()
+        guard receipt.hasUploads else { return }
+        let internalPayloads = payloads.map {
+            BackgroundUploadManager.Payload(submissionId: receipt.submissionId,
+                                            target: $0.target,
+                                            data: $0.data,
+                                            contentType: $0.contentType)
+        }
+        do {
+            try await uploadManager.enqueue(internalPayloads)
+        } catch let err as CommentRelayError {
             if case .forbidden = err { disable() }
             throw err
         }
