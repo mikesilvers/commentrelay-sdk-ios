@@ -52,6 +52,29 @@ public actor CommentRelayClient {
         return response
     }
 
+    public func submit(_ submission: CommentRelaySubmission) async throws -> CommentRelaySubmissionReceipt {
+        try ensureEnabled()
+        let encoder = APIClient.defaultEncoder()
+        let body = try encoder.encode(submission)
+        do {
+            return try await api.send(
+                method: "POST",
+                path: "sdk/v1/submissions",
+                body: body,
+                userIdentifier: submission.userIdentifier,
+                decodingAs: CommentRelaySubmissionReceipt.self)
+        } catch let err as CommentRelayError {
+            if case .forbidden = err { disable() }
+            throw err
+        }
+    }
+
+    /// Called by `BackgroundUploadManager` when presigned URLs have expired (>15 min).
+    /// Re-submits the same logical submission to obtain fresh upload URLs.
+    public func resubmit(_ submission: CommentRelaySubmission) async throws -> CommentRelaySubmissionReceipt {
+        try await submit(submission)
+    }
+
     // MARK: - Internal helpers
 
     private func ensureEnabled() throws {
