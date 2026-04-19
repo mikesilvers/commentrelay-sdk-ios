@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(swift package *)",
+      "Bash(swift --version)",
+      "Bash(swift /tmp/test_sendable.swift)",
+      "Bash(swift test *)",
+      "Bash(swift build *)",
+      "Bash(swiftc *)",
+      "Bash(swift -e 'import Foundation; let u = URL\\(string: \"http://localhost:3000\"\\)!; print\\(u.appendingPathComponent\\(\"health\"\\)\\)')",
+      "Bash(swift -e 'import Foundation; let u = URL\\(string: \"http://localhost:3000/v1\"\\)!; print\\(u.appendingPathComponent\\(\"health\"\\)\\)')",
+      "Bash(swift -e 'import Foundation; let u = URL\\(string: \"http://localhost:3000/v1/\"\\)!; print\\(u.appendingPathComponent\\(\"health\"\\)\\)')",
+      "Read(//Users/mikesilvers/**)",
+      "Read(//Users/mikesilvers/.config/**)",
+      "Bash(env)",
+      "Bash(bb --help)",
+      "Bash(bb auth *)",
+      "Bash(bb pr *)"
+    ]
+  }
+}
