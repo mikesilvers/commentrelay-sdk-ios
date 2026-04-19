@@ -2,7 +2,12 @@ import XCTest
 @testable import CommentRelayCore
 
 final class ModelDecodingTests: XCTestCase {
-    private let decoder = JSONDecoder()
+    private var decoder = JSONDecoder()
+
+    override func setUp() {
+        super.setUp()
+        decoder.dateDecodingStrategy = .iso8601
+    }
 
     func test_fieldType_roundTripsAllTenCases() throws {
         let raw = #"["textbox","true_false","numeric","photo","attachment","informational","email","phone","smiley_rating","color_scale"]"#
@@ -116,5 +121,29 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(receipt.submissionId.uuidString.lowercased(), "11111111-1111-1111-1111-111111111111")
         XCTAssertTrue(receipt.hasUploads)
         XCTAssertEqual(receipt.uploadUrls.first?.fileName, "s.png")
+    }
+
+    func test_history_decodesIdentified() throws {
+        let raw = #"""
+        {"submissions":[{
+          "id":"22222222-2222-2222-2222-222222222222",
+          "category_id":"cat1",
+          "category_title":"Bug Report",
+          "status":"complete",
+          "created_at":"2026-03-19T10:30:00Z",
+          "notes":[{"id":"n1","content":"Fixed in v2","created_at":"2026-03-19T12:00:00Z"}]
+        }]}
+        """#
+        let h = try decoder.decode(CommentRelayHistory.self, from: Data(raw.utf8))
+        XCTAssertFalse(h.isAnonymous)
+        XCTAssertEqual(h.submissions.count, 1)
+        XCTAssertEqual(h.submissions.first?.notes.first?.content, "Fixed in v2")
+    }
+
+    func test_history_decodesAnonymous() throws {
+        let raw = #"{"anonymousUser":true,"submissions":[]}"#
+        let h = try decoder.decode(CommentRelayHistory.self, from: Data(raw.utf8))
+        XCTAssertTrue(h.isAnonymous)
+        XCTAssertTrue(h.submissions.isEmpty)
     }
 }
