@@ -36,6 +36,8 @@ let client = CommentRelayClient(baseURL: URL(string: "https://api.example.com")!
 
 A multiplatform SwiftUI sample lives in `Example/CommentRelaySample/`. Open `Example/CommentRelaySample/CommentRelaySample.xcodeproj`, select an iOS Simulator or My Mac, and Run. The sample references this package by local path, so edits in `Sources/` are picked up on the next build.
 
+The macOS target enables App Sandbox with "Outgoing Connections (Client)". Xcode 26 stores this in `project.pbxproj` build settings (`ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES`) rather than a separate `.entitlements` file.
+
 ## Development
 
 Run the test suite from the repo root:
