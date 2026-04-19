@@ -77,7 +77,8 @@ struct ContentView: View {
         status = .loading
         Task {
             do {
-                let client = CommentRelayClient(baseURL: url)
+                let config = CommentRelayConfiguration(baseURL: url, apiKey: "crk_test_sample")
+                let client = CommentRelayClient(configuration: config)
                 let ok = try await client.ping()
                 status = ok ? .success : .failure("Server returned non-2xx")
             } catch {
