@@ -17,7 +17,7 @@ Platform-specific caveats are called out inline.
 ## Constraints & choices (confirmed with user)
 
 - **Platforms:** iOS 18+ and macOS 15+ (bumped from the scaffolding spec's iOS 17 / macOS 14).
-- **Swift tools version:** 5.9 (unchanged from scaffolding; open to bumping to 6.0 if strict concurrency is desired).
+- **Swift tools version:** 6.0. Bumping from the scaffolding's 5.9 is required because `.iOS(.v18)` and `.macOS(.v15)` platform constants are only expressible in PackageDescription 6.0+. This also enables Swift 6 strict concurrency by default across the package.
 - **Scope:** Full feedback flow (category picker → form → upload progress → thank-you → history) plus launcher helpers.
 - **Integration model:** Both a self-contained entry view and individually exposed screens for composition.
 - **User identity:** Hybrid — host may supply a `userIdentifier`; otherwise the SDK persists an anonymous UUID in the Keychain.
@@ -255,6 +255,5 @@ v1 assumes one active `CommentRelayClient` per process, created from one `Commen
 
 ## Open questions
 
-- **Swift tools version.** Stay at 5.9 or bump to 6.0 for strict concurrency? Bumping requires Xcode 16+, which is already implied by iOS 18 minimum but worth making explicit.
 - **Background upload state store.** Small JSON file vs SQLite. JSON is simpler; SQLite scales better if a user ever has many queued uploads. Default proposal: JSON v1, revisit if needed.
 - **SVG rendering for `smileyRating`.** The API returns SVG markup. Options: embed a tiny SVG renderer (adds a dep), rasterize offline and ship PNG assets keyed to position (loses admin flexibility), or render via `WKWebView`/HTML (heavy). Default proposal: parse the 5 known SVG shapes into SwiftUI `Shape` at build time; fall back to a generic circle on unknown markup.

@@ -10,7 +10,7 @@ final class MockURLProtocol: URLProtocol {
     /// Records the requests that came through — tests can inspect this.
     nonisolated(unsafe) static var requests: [URLRequest] = []
 
-    static func reset() {
+    nonisolated static func reset() {
         handler = nil
         requests = []
     }
