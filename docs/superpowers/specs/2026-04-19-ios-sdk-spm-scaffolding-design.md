@@ -33,12 +33,13 @@ commentrelay-sdk-ios/
 │   └── CommentRelayTests/
 │       └── CommentRelayClientTests.swift
 ├── Example/
-│   ├── CommentRelaySample.xcodeproj
 │   └── CommentRelaySample/
-│       ├── CommentRelaySampleApp.swift
-│       ├── ContentView.swift
-│       ├── CommentRelaySample.entitlements
-│       └── Assets.xcassets
+│       ├── CommentRelaySample.xcodeproj
+│       └── CommentRelaySample/
+│           ├── CommentRelaySampleApp.swift
+│           ├── ContentView.swift
+│           ├── CommentRelaySample.entitlements
+│           └── Assets.xcassets
 └── docs/
     └── superpowers/specs/
         └── 2026-04-19-ios-sdk-spm-scaffolding-design.md   # this file
@@ -152,7 +153,7 @@ Run via `swift test` from the repo root, or `⌘U` in Xcode when `Package.swift`
 ## Developer workflow
 
 - **Edit the SDK:** open `Package.swift` in Xcode. Or use `swift build` / `swift test` from the command line.
-- **Run the sample:** open `Example/CommentRelaySample.xcodeproj`, pick a destination (iOS Simulator or My Mac), hit Run. The package is resolved from local path `../`, so edits in `Sources/` appear on next build — no tag, no version bump, no publish step.
+- **Run the sample:** open `Example/CommentRelaySample/CommentRelaySample.xcodeproj`, pick a destination (iOS Simulator or My Mac), hit Run. The package is resolved from local path `../`, so edits in `Sources/` appear on next build — no tag, no version bump, no publish step.
 - **Point at a non-localhost API:** edit the URL in the sample's text field, or pass a different `baseURL` to `CommentRelayClient(baseURL:)`.
 
 ## README
@@ -161,7 +162,7 @@ Short README covers:
 - What the SDK is (one-line)
 - Minimum versions (iOS 17, macOS 14)
 - SPM install snippet (one block)
-- How to run the sample (`open Example/CommentRelaySample.xcodeproj`)
+- How to run the sample (`open Example/CommentRelaySample/CommentRelaySample.xcodeproj`)
 - How to override the base URL
 
 ## Explicitly deferred
