@@ -68,4 +68,21 @@ final class CommentRelayClientTests: XCTestCase {
 
         XCTAssertFalse(ok)
     }
+
+    func test_ping_throws_onTransportError() async {
+        struct BoomError: Error, Equatable {}
+        MockURLProtocol.handler = { _ in throw BoomError() }
+
+        let client = CommentRelayClient(
+            baseURL: URL(string: "http://localhost:3000")!,
+            session: session)
+
+        do {
+            _ = try await client.ping()
+            XCTFail("expected ping() to throw")
+        } catch {
+            // URLSession wraps the underlying error; assert it surfaced.
+            XCTAssertNotNil(error)
+        }
+    }
 }
