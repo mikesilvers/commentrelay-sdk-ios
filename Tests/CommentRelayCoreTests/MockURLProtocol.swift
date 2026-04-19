@@ -5,10 +5,10 @@ import Foundation
 /// with `protocolClasses = [MockURLProtocol.self]`.
 final class MockURLProtocol: URLProtocol {
     /// Handler the test installs. Receives the request and returns (response, body) or throws.
-    static var handler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
+    nonisolated(unsafe) static var handler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
 
     /// Records the requests that came through — tests can inspect this.
-    static var requests: [URLRequest] = []
+    nonisolated(unsafe) static var requests: [URLRequest] = []
 
     static func reset() {
         handler = nil

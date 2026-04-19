@@ -1,5 +1,5 @@
 import SwiftUI
-import CommentRelay
+import CommentRelayCore
 
 @main
 struct CommentRelaySampleApp: App {

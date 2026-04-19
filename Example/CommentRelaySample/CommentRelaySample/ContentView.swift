@@ -1,5 +1,5 @@
 import SwiftUI
-import CommentRelay
+import CommentRelayCore
 
 struct ContentView: View {
     @State private var baseURLString = "http://localhost:3000"

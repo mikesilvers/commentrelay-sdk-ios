@@ -1,5 +1,5 @@
 import XCTest
-@testable import CommentRelay
+@testable import CommentRelayCore
 
 final class CommentRelayClientTests: XCTestCase {
     private var session: URLSession!
