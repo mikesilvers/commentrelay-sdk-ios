@@ -76,4 +76,45 @@ final class ModelDecodingTests: XCTestCase {
         let result = try decoder.decode(CommentRelayConfigResponse.self, from: Data(raw.utf8))
         guard case .current = result else { return XCTFail() }
     }
+
+    func test_submission_encodesInAPIShape() throws {
+        let submission = CommentRelaySubmission(
+            categoryId: "cat1",
+            userIdentifier: "user-123",
+            platform: .ios,
+            fields: [.text(fieldId: "f1", value: "bug"), .files(fieldId: "f2", metadata: [
+                .init(name: "s.png", type: "image/png", size: 123)
+            ])],
+            osVersion: "18.0",
+            deviceModel: "iPhone 16",
+            appVersion: "2.1.0",
+            sdkVersion: "0.0.1",
+            locale: "en_US",
+            contactPreference: .email,
+            contactDetails: "a@b.c",
+            sessionId: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+        )
+        let data = try JSONEncoder().encode(submission)
+        let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertEqual(json["category_id"] as? String, "cat1")
+        XCTAssertEqual(json["user_identifier"] as? String, "user-123")
+        XCTAssertEqual(json["platform"] as? String, "ios")
+        XCTAssertEqual(json["contact_preference"] as? String, "email")
+        let fields = try XCTUnwrap(json["fields"] as? [[String: Any]])
+        XCTAssertEqual(fields.count, 2)
+        XCTAssertEqual(fields[0]["value"] as? String, "bug")
+        let meta = try XCTUnwrap(fields[1]["file_metadata"] as? [[String: Any]])
+        XCTAssertEqual(meta.first?["name"] as? String, "s.png")
+    }
+
+    func test_receipt_decodes() throws {
+        let raw = """
+        {"submissionId":"11111111-1111-1111-1111-111111111111","hasUploads":true,"uploadUrls":[
+          {"fieldId":"f2","fileName":"s.png","uploadUrl":"https://s3/upload"}]}
+        """
+        let receipt = try decoder.decode(CommentRelaySubmissionReceipt.self, from: Data(raw.utf8))
+        XCTAssertEqual(receipt.submissionId.uuidString.lowercased(), "11111111-1111-1111-1111-111111111111")
+        XCTAssertTrue(receipt.hasUploads)
+        XCTAssertEqual(receipt.uploadUrls.first?.fileName, "s.png")
+    }
 }
