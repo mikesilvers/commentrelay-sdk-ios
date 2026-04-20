@@ -141,6 +141,19 @@ public actor CommentRelayClient {
         isEnabled = true
     }
 
+    public func saveDraft(categoryId: String, fieldValues: [String: String]) async {
+        let draft = CommentRelayDraft(categoryId: categoryId, fieldValues: fieldValues, updatedAt: Date())
+        await draftStore.save(draft)
+    }
+
+    public func loadDraft(categoryId: String) async -> CommentRelayDraft? {
+        await draftStore.load(categoryId: categoryId)
+    }
+
+    public func deleteDraft(categoryId: String) async {
+        await draftStore.delete(categoryId: categoryId)
+    }
+
     // MARK: - Internal helpers
 
     private func ensureEnabled() throws {

@@ -1,7 +1,7 @@
 // Sources/CommentRelayCore/Internal/DraftStore.swift
 import Foundation
 
-actor DraftStore {
+public actor DraftStore {
     public struct Draft: Codable, Sendable, Equatable {
         public let categoryId: String
         public let fieldValues: [String: String]
@@ -67,3 +67,6 @@ actor DraftStore {
         directory.appendingPathComponent("\(categoryId).json")
     }
 }
+
+public typealias CommentRelayDraft = DraftStore.Draft
+
