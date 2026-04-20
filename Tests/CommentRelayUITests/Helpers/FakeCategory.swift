@@ -22,6 +22,21 @@ enum FakeField {
         decode(#"{"id":"\#(id)","field_type":"informational","label":"\#(label)","is_required":false,"is_gate":false,"sort_order":1,"max_files":null}"#)
     }
 
+    static func smileyRating(id: String = "fs", label: String = "How do you feel?", required: Bool = false) -> CommentRelayField {
+        let raw = #"""
+        {"id":"\#(id)","field_type":"smiley_rating","label":"\#(label)","is_required":\#(required),"is_gate":false,"sort_order":1,"max_files":null,
+          "options":[
+            {"position":1,"label":"very_unhappy","svg":"<svg/>"},
+            {"position":2,"label":"unhappy","svg":"<svg/>"},
+            {"position":3,"label":"neutral","svg":"<svg/>"},
+            {"position":4,"label":"happy","svg":"<svg/>"},
+            {"position":5,"label":"very_happy","svg":"<svg/>"}
+          ]
+        }
+        """#
+        return decode(raw)
+    }
+
     private static func decode(_ raw: String) -> CommentRelayField {
         try! JSONDecoder().decode(CommentRelayField.self, from: Data(raw.utf8))
     }
