@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "CommentRelay",
+    defaultLocalization: "en",
     platforms: [
         .iOS(.v18),
         .macOS(.v15),
