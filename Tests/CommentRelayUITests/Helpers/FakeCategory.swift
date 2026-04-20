@@ -58,6 +58,10 @@ enum FakeField {
         decode(#"{"id":"\#(id)","field_type":"photo","label":"\#(label)","is_required":\#(required),"is_gate":false,"sort_order":1,"max_files":\#(maxFiles)}"#)
     }
 
+    static func attachment(id: String = "fa", label: String = "File", maxFiles: Int = 3, required: Bool = false) -> CommentRelayField {
+        decode(#"{"id":"\#(id)","field_type":"attachment","label":"\#(label)","is_required":\#(required),"is_gate":false,"sort_order":1,"max_files":\#(maxFiles)}"#)
+    }
+
     private static func decode(_ raw: String) -> CommentRelayField {
         try! JSONDecoder().decode(CommentRelayField.self, from: Data(raw.utf8))
     }
