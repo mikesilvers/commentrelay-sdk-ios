@@ -10,7 +10,7 @@ public enum CommentRelayLocalization {
         registered[locale.identifier] = bundle
     }
 
-    static func registeredBundle(for locale: Locale) -> Bundle? {
+    public static func registeredBundle(for locale: Locale) -> Bundle? {
         lock.lock(); defer { lock.unlock() }
         if let b = registered[locale.identifier] { return b }
         if let languageCode = locale.language.languageCode?.identifier,

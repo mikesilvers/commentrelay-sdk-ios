@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		124208BD2F9534950001DE82 /* CommentRelayCore in Frameworks */ = {isa = PBXBuildFile; productRef = 124208BC2F9534950001DE82 /* CommentRelayCore */; };
+		1111111111111111AAAA0001 /* CommentRelayUI in Frameworks */ = {isa = PBXBuildFile; productRef = 1111111111111111AAAA0002 /* CommentRelayUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				124208BD2F9534950001DE82 /* CommentRelayCore in Frameworks */,
+				1111111111111111AAAA0001 /* CommentRelayUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +73,7 @@
 			name = CommentRelaySample;
 			packageProductDependencies = (
 				124208BC2F9534950001DE82 /* CommentRelayCore */,
+				1111111111111111AAAA0002 /* CommentRelayUI */,
 			);
 			productName = CommentRelaySample;
 			productReference = 124208AD2F952AFB0001DE82 /* CommentRelaySample.app */;
@@ -392,6 +395,10 @@
 		124208BC2F9534950001DE82 /* CommentRelayCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = CommentRelayCore;
+		};
+		1111111111111111AAAA0002 /* CommentRelayUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CommentRelayUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

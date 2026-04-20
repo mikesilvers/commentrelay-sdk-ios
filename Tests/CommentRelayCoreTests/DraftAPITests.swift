@@ -1,0 +1,28 @@
+// Tests/CommentRelayCoreTests/DraftAPITests.swift
+import XCTest
+@testable import CommentRelayCore
+
+final class DraftAPITests: XCTestCase {
+    private func makeClient() async throws -> CommentRelayClient {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("crl-draft-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let config = CommentRelayConfiguration(
+            baseURL: URL(string: "http://localhost:3000")!,
+            apiKey: "crk_test_abc",
+            userIdentifier: "test-user")
+        return CommentRelayClient(configuration: config, session: .shared, cacheDirectory: dir, keychainService: "crl.test.\(UUID().uuidString)")
+    }
+
+    func test_saveLoadDelete_roundTrip() async throws {
+        let client = try await makeClient()
+        await client.saveDraft(categoryId: "cat1", fieldValues: ["f1": "hello"])
+        // DraftStore default debounce is 0.5s; wait long enough for the flush.
+        try await Task.sleep(nanoseconds: 700_000_000)
+        let loaded = await client.loadDraft(categoryId: "cat1")
+        XCTAssertEqual(loaded?.fieldValues["f1"], "hello")
+
+        await client.deleteDraft(categoryId: "cat1")
+        let afterDelete = await client.loadDraft(categoryId: "cat1")
+        XCTAssertNil(afterDelete)
+    }
+}
