@@ -15,6 +15,12 @@ enum FakeField {
     static func numeric(id: String = "fn", label: String = "Rating", required: Bool = false) -> CommentRelayField {
         decode(#"{"id":"\#(id)","field_type":"numeric","label":"\#(label)","is_required":\#(required),"is_gate":false,"sort_order":1,"max_files":null}"#)
     }
+    static func trueFalse(id: String = "ft", label: String = "Reproducible?") -> CommentRelayField {
+        decode(#"{"id":"\#(id)","field_type":"true_false","label":"\#(label)","is_required":false,"is_gate":false,"sort_order":1,"max_files":null}"#)
+    }
+    static func informational(id: String = "fi", label: String = "This is informational copy.") -> CommentRelayField {
+        decode(#"{"id":"\#(id)","field_type":"informational","label":"\#(label)","is_required":false,"is_gate":false,"sort_order":1,"max_files":null}"#)
+    }
 
     private static func decode(_ raw: String) -> CommentRelayField {
         try! JSONDecoder().decode(CommentRelayField.self, from: Data(raw.utf8))
