@@ -37,6 +37,23 @@ enum FakeField {
         return decode(raw)
     }
 
+    static func colorScale(id: String = "fc", label: String = "Rate the color", required: Bool = false) -> CommentRelayField {
+        var opts = ""
+        for i in 1...10 {
+            let r = 255 - (i * 25)
+            let g = i * 25
+            let hex = String(format: "#%02X%02X00", max(0, r), min(255, g))
+            opts += #"{"position":\#(i),"color":"\#(hex)","label":null}"#
+            if i != 10 { opts += "," }
+        }
+        let raw = #"""
+        {"id":"\#(id)","field_type":"color_scale","label":"\#(label)","is_required":\#(required),"is_gate":false,"sort_order":1,"max_files":null,
+          "options":[\#(opts)]
+        }
+        """#
+        return decode(raw)
+    }
+
     private static func decode(_ raw: String) -> CommentRelayField {
         try! JSONDecoder().decode(CommentRelayField.self, from: Data(raw.utf8))
     }
