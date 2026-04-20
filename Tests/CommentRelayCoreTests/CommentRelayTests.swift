@@ -1,5 +1,5 @@
 import XCTest
-@testable import CommentRelay
+@testable import CommentRelayCore
 
 final class CommentRelayTests: XCTestCase {
     func test_version_isNonEmpty() {

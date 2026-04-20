@@ -4,12 +4,13 @@ Package.resolved
 .swiftpm/
 
 # Xcode
-*.xcodeproj/xcuserdata/
-*.xcworkspace/xcuserdata/
-*.xcodeproj/project.xcworkspace/xcuserdata/
+xcuserdata/
 DerivedData/
 *.xcuserstate
 *.xcscmblueprint
+
+# Claude Code local settings
+.claude/
 
 # macOS
 .DS_Store
@@ -18,3 +19,6 @@ DerivedData/
 build/
 *.o
 *.a
+
+# Superpowers brainstorm workspace
+.superpowers/
