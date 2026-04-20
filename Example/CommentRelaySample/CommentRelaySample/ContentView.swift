@@ -1,15 +1,16 @@
 import SwiftUI
 import CommentRelayCore
+import CommentRelayUI
 
 struct ContentView: View {
     @State private var baseURLString = "http://localhost:3000"
-    @State private var status: Status = .idle
+    @State private var apiKeyString = "crk_test_sample"
+    @State private var userIdentifier = ""
+    @State private var isFeedbackPresented = false
+    @State private var pingStatus: PingStatus = .idle
 
-    enum Status {
-        case idle
-        case loading
-        case success
-        case failure(String)
+    enum PingStatus {
+        case idle, loading, success, failure(String)
     }
 
     var body: some View {
@@ -17,72 +18,76 @@ struct ContentView: View {
             Text("CommentRelay v\(CommentRelay.version)")
                 .font(.headline)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Base URL").font(.caption).foregroundStyle(.secondary)
-                TextField("Base URL", text: $baseURLString)
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
-                    #if os(iOS)
-                    .textInputAutocapitalization(.never)
-                    .keyboardType(.URL)
-                    #endif
-            }
+            group("Base URL", $baseURLString)
+            group("API key", $apiKeyString)
+            group("User identifier (optional)", $userIdentifier)
 
             Button(action: ping) {
                 HStack {
-                    if case .loading = status {
-                        ProgressView().controlSize(.small)
-                    }
-                    Text("Ping")
+                    if case .loading = pingStatus { ProgressView().controlSize(.small) }
+                    Text("Ping /health")
                 }
                 .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(isLoading)
+            .buttonStyle(.bordered)
 
-            statusView
+            Button("Send feedback") {
+                isFeedbackPresented = true
+            }
+            .buttonStyle(.borderedProminent)
+            .frame(maxWidth: .infinity)
+            .commentRelaySheet(
+                isPresented: $isFeedbackPresented,
+                configuration: makeConfig()
+            )
+
+            pingStatusView
 
             Spacer()
         }
         .padding()
-        .frame(minWidth: 320, minHeight: 260)
+        .frame(minWidth: 320, minHeight: 360)
     }
 
-    private var isLoading: Bool {
-        if case .loading = status { return true }
-        return false
+    private func group(_ label: String, _ text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).font(.caption).foregroundStyle(.secondary)
+            TextField(label, text: text)
+                .textFieldStyle(.roundedBorder)
+                .autocorrectionDisabled()
+                #if os(iOS)
+                .textInputAutocapitalization(.never)
+                #endif
+        }
     }
 
     @ViewBuilder
-    private var statusView: some View {
-        switch status {
-        case .idle:
-            EmptyView()
-        case .loading:
-            Text("Pinging…").foregroundStyle(.secondary)
-        case .success:
-            Label("Connected", systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
-        case .failure(let message):
-            Label(message, systemImage: "xmark.circle.fill")
-                .foregroundStyle(.red)
+    private var pingStatusView: some View {
+        switch pingStatus {
+        case .idle: EmptyView()
+        case .loading: Text("Pinging…").foregroundStyle(.secondary)
+        case .success: Label("Connected", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+        case .failure(let m): Label(m, systemImage: "xmark.circle.fill").foregroundStyle(.red)
         }
     }
 
+    private func makeConfig() -> CommentRelayConfiguration {
+        let url = URL(string: baseURLString) ?? URL(string: "http://localhost:3000")!
+        return CommentRelayConfiguration(
+            baseURL: url,
+            apiKey: apiKeyString,
+            userIdentifier: userIdentifier.isEmpty ? nil : userIdentifier
+        )
+    }
+
     private func ping() {
-        guard let url = URL(string: baseURLString) else {
-            status = .failure("Invalid URL")
-            return
-        }
-        status = .loading
+        pingStatus = .loading
         Task {
             do {
-                let config = CommentRelayConfiguration(baseURL: url, apiKey: "crk_test_sample")
-                let client = CommentRelayClient(configuration: config)
-                let ok = try await client.ping()
-                status = ok ? .success : .failure("Server returned non-2xx")
+                let ok = try await CommentRelayClient(configuration: makeConfig()).ping()
+                pingStatus = ok ? .success : .failure("Server returned non-2xx")
             } catch {
-                status = .failure(error.localizedDescription)
+                pingStatus = .failure(error.localizedDescription)
             }
         }
     }
