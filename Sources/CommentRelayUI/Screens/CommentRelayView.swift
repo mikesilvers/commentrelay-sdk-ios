@@ -101,8 +101,10 @@ public struct CommentRelayView: View {
                 route = .picker(forms: forms)
             }
         } catch let err as CommentRelayError {
+            CommentRelayLoggerHolder.shared.log(level: .error, message: "fetchConfig failed", error: err)
             route = .progressFailed(message: message(for: err))
         } catch {
+            CommentRelayLoggerHolder.shared.log(level: .error, message: "fetchConfig failed with unexpected error", error: error)
             route = .progressFailed(message: Strings.errorGeneric)
         }
     }
@@ -120,8 +122,10 @@ public struct CommentRelayView: View {
             }
             route = .thanks(showHistory: configuration.userIdentifier != nil)
         } catch let err as CommentRelayError {
+            CommentRelayLoggerHolder.shared.log(level: .error, message: "submit failed", error: err)
             route = .progressFailed(message: message(for: err))
         } catch {
+            CommentRelayLoggerHolder.shared.log(level: .error, message: "submit failed with unexpected error", error: error)
             route = .progressFailed(message: Strings.errorGeneric)
         }
     }
@@ -174,6 +178,7 @@ private struct HistoryLoader: View {
             do {
                 history = try await client.fetchHistory()
             } catch {
+                CommentRelayLoggerHolder.shared.log(level: .error, message: "fetchHistory failed", error: error)
                 errorMessage = Strings.errorGeneric
             }
         }
