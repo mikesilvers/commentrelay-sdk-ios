@@ -17,17 +17,17 @@ final class ConfigCacheTests: XCTestCase {
 
     func test_writeThenReadRoundTrip() async throws {
         let cache = ConfigCache(directory: tempDir)
-        let cat = CommentRelayCategory(id: "c1", title: "Bug", showInPicker: true, responseLimitCount: nil, responseLimitType: nil, responseLimitWindowDays: nil, moreFeedbackPrompt: nil, isActive: true, sortOrder: 1, fields: [])
-        await cache.write(hash: "abc", categories: [cat])
+        let form = CommentRelayForm(id: "f1", title: "Bug", showInPicker: true, responseLimitCount: nil, responseLimitType: nil, responseLimitWindowMinutes: nil, moreFeedbackPrompt: nil, isActive: true, sortOrder: 1, fields: [])
+        await cache.write(hash: "abc", forms: [form])
         let snap = await cache.read()
         XCTAssertNotNil(snap)
         XCTAssertEqual(snap?.hash, "abc")
-        XCTAssertEqual(snap?.categories.first?.id, "c1")
+        XCTAssertEqual(snap?.forms.first?.id, "f1")
     }
 
     func test_survivesNewInstance() async throws {
         let cacheA = ConfigCache(directory: tempDir)
-        await cacheA.write(hash: "h1", categories: [])
+        await cacheA.write(hash: "h1", forms: [])
         let cacheB = ConfigCache(directory: tempDir)
         let snap = await cacheB.read()
         XCTAssertNotNil(snap)

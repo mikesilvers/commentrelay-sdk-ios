@@ -12,7 +12,7 @@ public struct HistoryDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    Text(entry.categoryTitle).font(.title2).bold()
+                    Text(entry.formTitle).font(.title2).bold()
                     Spacer()
                     Text(entry.createdAt, style: .date)
                         .font(.caption)
@@ -30,7 +30,7 @@ public struct HistoryDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(entry.categoryTitle)
+        .navigationTitle(entry.formTitle)
     }
 }
 

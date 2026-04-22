@@ -4,7 +4,7 @@ import CommentRelayCore
 
 @Observable
 public final class FeedbackFormViewModel {
-    public let category: CommentRelayCategory
+    public let form: CommentRelayForm
     public let userIdentifier: String
     public let platform: Platform
     public let sdkVersion: String?
@@ -16,8 +16,8 @@ public final class FeedbackFormViewModel {
     public var contactPreference: ContactPreference = .none
     public var contactDetails: String = ""
 
-    public init(category: CommentRelayCategory, userIdentifier: String, platform: Platform, sdkVersion: String?) {
-        self.category = category
+    public init(form: CommentRelayForm, userIdentifier: String, platform: Platform, sdkVersion: String?) {
+        self.form = form
         self.userIdentifier = userIdentifier
         self.platform = platform
         self.sdkVersion = sdkVersion
@@ -31,7 +31,7 @@ public final class FeedbackFormViewModel {
     public func setPhotos(_ fieldId: String, _ value: [PhotoAttachment]) { photoValues[fieldId] = value }
 
     public var isSubmittable: Bool {
-        for field in category.fields where field.isRequired {
+        for field in form.fields where field.isRequired {
             switch field.fieldType {
             case .textbox, .email, .phone, .numeric:
                 let v = textValues[field.id] ?? ""
@@ -54,7 +54,7 @@ public final class FeedbackFormViewModel {
 
     public func buildSubmission() -> CommentRelaySubmission {
         var fieldValues: [CommentRelaySubmission.FieldValue] = []
-        for field in category.fields.sorted(by: { $0.sortOrder < $1.sortOrder }) {
+        for field in form.fields.sorted(by: { $0.sortOrder < $1.sortOrder }) {
             switch field.fieldType {
             case .textbox, .email, .phone, .numeric:
                 let v = textValues[field.id] ?? ""
@@ -78,7 +78,7 @@ public final class FeedbackFormViewModel {
             }
         }
         return CommentRelaySubmission(
-            categoryId: category.id,
+            formId: form.id,
             userIdentifier: userIdentifier,
             platform: platform,
             fields: fieldValues,

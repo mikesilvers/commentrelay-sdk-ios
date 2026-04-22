@@ -66,18 +66,18 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertNil(f.parentFieldId)
     }
 
-    func test_category_decodesFullConfigPayload() throws {
+    func test_form_decodesFullConfigPayload() throws {
         let raw = #"""
         {
           "current": false,
           "hash": "abc123",
-          "categories": [{
-            "id": "cat1",
+          "forms": [{
+            "id": "form1",
             "title": "Bug Report",
             "show_in_picker": true,
             "response_limit_count": 5,
             "response_limit_type": "per_session",
-            "response_limit_window_days": null,
+            "response_limit_window_minutes": null,
             "more_feedback_prompt": "Tell us more",
             "is_active": true,
             "sort_order": 1,
@@ -86,14 +86,14 @@ final class ModelDecodingTests: XCTestCase {
         }
         """#
         let result = try decoder.decode(CommentRelayConfigResponse.self, from: Data(raw.utf8))
-        guard case .updated(let hash, let categories) = result else { return XCTFail() }
+        guard case .updated(let hash, let forms) = result else { return XCTFail() }
         XCTAssertEqual(hash, "abc123")
-        XCTAssertEqual(categories.first?.id, "cat1")
-        XCTAssertEqual(categories.first?.title, "Bug Report")
-        XCTAssertEqual(categories.first?.responseLimitType, .perSession)
+        XCTAssertEqual(forms.first?.id, "form1")
+        XCTAssertEqual(forms.first?.title, "Bug Report")
+        XCTAssertEqual(forms.first?.responseLimitType, .perSession)
     }
 
-    func test_category_decodesCurrentResponse() throws {
+    func test_form_decodesCurrentResponse() throws {
         let raw = #"{"current":true}"#
         let result = try decoder.decode(CommentRelayConfigResponse.self, from: Data(raw.utf8))
         guard case .current = result else { return XCTFail() }
@@ -101,7 +101,7 @@ final class ModelDecodingTests: XCTestCase {
 
     func test_submission_encodesInAPIShape() throws {
         let submission = CommentRelaySubmission(
-            categoryId: "cat1",
+            formId: "form1",
             userIdentifier: "user-123",
             platform: .ios,
             fields: [.text(fieldId: "f1", value: "bug"), .files(fieldId: "f2", metadata: [
@@ -118,7 +118,7 @@ final class ModelDecodingTests: XCTestCase {
         )
         let data = try JSONEncoder().encode(submission)
         let json = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        XCTAssertEqual(json["category_id"] as? String, "cat1")
+        XCTAssertEqual(json["form_id"] as? String, "form1")
         XCTAssertEqual(json["user_identifier"] as? String, "user-123")
         XCTAssertEqual(json["platform"] as? String, "ios")
         XCTAssertEqual(json["contact_preference"] as? String, "email")
@@ -144,8 +144,8 @@ final class ModelDecodingTests: XCTestCase {
         let raw = #"""
         {"submissions":[{
           "id":"22222222-2222-2222-2222-222222222222",
-          "category_id":"cat1",
-          "category_title":"Bug Report",
+          "form_id":"form1",
+          "form_title":"Bug Report",
           "status":"complete",
           "created_at":"2026-03-19T10:30:00Z",
           "notes":[{"id":"n1","content":"Fixed in v2","created_at":"2026-03-19T12:00:00Z"}]

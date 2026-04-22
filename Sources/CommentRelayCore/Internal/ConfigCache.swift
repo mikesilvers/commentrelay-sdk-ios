@@ -3,7 +3,7 @@ import Foundation
 actor ConfigCache {
     struct Snapshot: Codable, Sendable {
         let hash: String
-        let categories: [CommentRelayCategory]
+        let forms: [CommentRelayForm]
     }
 
     private let fileURL: URL
@@ -29,8 +29,8 @@ actor ConfigCache {
         return try? JSONDecoder().decode(Snapshot.self, from: data)
     }
 
-    func write(hash: String, categories: [CommentRelayCategory]) {
-        let snap = Snapshot(hash: hash, categories: categories)
+    func write(hash: String, forms: [CommentRelayForm]) {
+        let snap = Snapshot(hash: hash, forms: forms)
         guard let data = try? JSONEncoder().encode(snap) else { return }
         try? fm.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? data.write(to: fileURL, options: .atomic)

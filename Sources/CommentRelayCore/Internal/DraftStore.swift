@@ -3,11 +3,11 @@ import Foundation
 
 public actor DraftStore {
     public struct Draft: Codable, Sendable, Equatable {
-        public let categoryId: String
+        public let formId: String
         public let fieldValues: [String: String]
         public let updatedAt: Date
-        public init(categoryId: String, fieldValues: [String: String], updatedAt: Date) {
-            self.categoryId = categoryId; self.fieldValues = fieldValues; self.updatedAt = updatedAt
+        public init(formId: String, fieldValues: [String: String], updatedAt: Date) {
+            self.formId = formId; self.fieldValues = fieldValues; self.updatedAt = updatedAt
         }
     }
 
@@ -24,49 +24,48 @@ public actor DraftStore {
     }
 
     func save(_ draft: Draft) {
-        pending[draft.categoryId] = draft
-        pendingTasks[draft.categoryId]?.cancel()
+        pending[draft.formId] = draft
+        pendingTasks[draft.formId]?.cancel()
         let debounce = self.debounce
-        let categoryId = draft.categoryId
-        pendingTasks[categoryId] = Task { [weak self] in
+        let formId = draft.formId
+        pendingTasks[formId] = Task { [weak self] in
             if debounce > 0 {
                 try? await Task.sleep(nanoseconds: UInt64(debounce * 1_000_000_000))
             }
             guard let self, !Task.isCancelled else { return }
-            await self.flush(categoryId: categoryId)
+            await self.flush(formId: formId)
         }
     }
 
-    func load(categoryId: String) -> Draft? {
-        if let p = pending[categoryId] { return p }
-        return peekOnDisk(categoryId: categoryId)
+    func load(formId: String) -> Draft? {
+        if let p = pending[formId] { return p }
+        return peekOnDisk(formId: formId)
     }
 
-    func peekOnDisk(categoryId: String) -> Draft? {
-        guard let data = try? Data(contentsOf: url(for: categoryId)) else { return nil }
+    func peekOnDisk(formId: String) -> Draft? {
+        guard let data = try? Data(contentsOf: url(for: formId)) else { return nil }
         return try? JSONDecoder().decode(Draft.self, from: data)
     }
 
-    func delete(categoryId: String) {
-        pending.removeValue(forKey: categoryId)
-        pendingTasks[categoryId]?.cancel()
-        pendingTasks.removeValue(forKey: categoryId)
-        try? fm.removeItem(at: url(for: categoryId))
+    func delete(formId: String) {
+        pending.removeValue(forKey: formId)
+        pendingTasks[formId]?.cancel()
+        pendingTasks.removeValue(forKey: formId)
+        try? fm.removeItem(at: url(for: formId))
     }
 
-    private func flush(categoryId: String) {
-        guard let draft = pending[categoryId] else { return }
+    private func flush(formId: String) {
+        guard let draft = pending[formId] else { return }
         if let data = try? JSONEncoder().encode(draft) {
-            try? data.write(to: url(for: categoryId), options: .atomic)
+            try? data.write(to: url(for: formId), options: .atomic)
         }
-        pending.removeValue(forKey: categoryId)
-        pendingTasks.removeValue(forKey: categoryId)
+        pending.removeValue(forKey: formId)
+        pendingTasks.removeValue(forKey: formId)
     }
 
-    private func url(for categoryId: String) -> URL {
-        directory.appendingPathComponent("\(categoryId).json")
+    private func url(for formId: String) -> URL {
+        directory.appendingPathComponent("\(formId).json")
     }
 }
 
 public typealias CommentRelayDraft = DraftStore.Draft
-

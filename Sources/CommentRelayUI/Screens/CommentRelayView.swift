@@ -17,8 +17,8 @@ public struct CommentRelayView: View {
 
     enum Route {
         case loading
-        case picker(categories: [CommentRelayCategory])
-        case form(category: CommentRelayCategory)
+        case picker(forms: [CommentRelayForm])
+        case form(form: CommentRelayForm)
         case progress(currentFile: String?)
         case progressFailed(message: String)
         case thanks(showHistory: Bool)
@@ -39,7 +39,7 @@ public struct CommentRelayView: View {
                     }
                 }
                 .task {
-                    await loadCategories()
+                    await loadForms()
                 }
         }
     }
@@ -49,16 +49,16 @@ public struct CommentRelayView: View {
         switch route {
         case .loading:
             LoadingView(label: Strings.formSending)
-        case .picker(let categories):
-            CategoryPickerView(categories: categories) { selected in
+        case .picker(let forms):
+            FormPickerView(forms: forms) { selected in
                 let vm = FeedbackFormViewModel(
-                    category: selected,
+                    form: selected,
                     userIdentifier: configuration.userIdentifier ?? "anonymous",
                     platform: .ios,
                     sdkVersion: configuration.effectiveSDKVersion
                 )
                 activeViewModel = vm
-                route = .form(category: selected)
+                route = .form(form: selected)
             }
         case .form:
             if let vm = activeViewModel {
@@ -89,16 +89,16 @@ public struct CommentRelayView: View {
     private func reload() async {
         activeViewModel = nil
         route = .loading
-        await loadCategories()
+        await loadForms()
     }
 
-    private func loadCategories() async {
+    private func loadForms() async {
         do {
             switch try await client.fetchConfig(cachedHash: nil) {
             case .current:
-                route = .picker(categories: [])
-            case .updated(_, let categories):
-                route = .picker(categories: categories)
+                route = .picker(forms: [])
+            case .updated(_, let forms):
+                route = .picker(forms: forms)
             }
         } catch let err as CommentRelayError {
             route = .progressFailed(message: message(for: err))

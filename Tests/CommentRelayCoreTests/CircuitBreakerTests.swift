@@ -24,7 +24,7 @@ final class CircuitBreakerTests: XCTestCase {
         let config = CommentRelayConfiguration(baseURL: URL(string: "http://x")!, apiKey: "k", userIdentifier: "u")
         let client = CommentRelayClient(configuration: config, session: session, cacheDirectory: dir, keychainService: "crl.test.\(UUID().uuidString)")
 
-        let submission = CommentRelaySubmission(categoryId: "c", userIdentifier: "u", platform: .ios, fields: [])
+        let submission = CommentRelaySubmission(formId: "c", userIdentifier: "u", platform: .ios, fields: [])
         do { _ = try await client.submit(submission); XCTFail() } catch {}
         let enabledAfter403 = await client.isEnabled
         XCTAssertFalse(enabledAfter403)

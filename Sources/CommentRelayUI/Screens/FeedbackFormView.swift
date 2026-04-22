@@ -14,11 +14,11 @@ public struct FeedbackFormView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if let prompt = viewModel.category.moreFeedbackPrompt {
+                if let prompt = viewModel.form.moreFeedbackPrompt {
                     Text(prompt).font(.callout).foregroundStyle(.secondary)
                 }
 
-                ForEach(visibleFields(in: viewModel.category.fields, boolValues: viewModel.boolValues), id: \.field.id) { item in
+                ForEach(visibleFields(in: viewModel.form.fields, boolValues: viewModel.boolValues), id: \.field.id) { item in
                     renderer(for: item.field)
                         .padding(.leading, CGFloat(item.depth) * 12)
                 }
@@ -32,7 +32,7 @@ public struct FeedbackFormView: View {
             }
             .padding()
         }
-        .navigationTitle(viewModel.category.title)
+        .navigationTitle(viewModel.form.title)
     }
 
     @ViewBuilder

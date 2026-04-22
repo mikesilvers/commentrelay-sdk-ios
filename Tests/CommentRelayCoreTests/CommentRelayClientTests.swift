@@ -106,7 +106,7 @@ final class CommentRelayClientTests: XCTestCase {
         }
         let client = try await makeClient()
         let submission = CommentRelaySubmission(
-            categoryId: "cat1", userIdentifier: "u", platform: .ios,
+            formId: "form1", userIdentifier: "u", platform: .ios,
             fields: [.text(fieldId: "f1", value: "hello")])
         let receipt = try await client.submit(submission)
         XCTAssertEqual(receipt.submissionId.uuidString.lowercased(), "11111111-1111-1111-1111-111111111111")
@@ -116,7 +116,7 @@ final class CommentRelayClientTests: XCTestCase {
     func test_fetchConfig_returnsUpdatedPayload_andPersistsCache() async throws {
         MockURLProtocol.handler = { request in
             let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: nil)!
-            let body = #"{"current":false,"hash":"h1","categories":[]}"#
+            let body = #"{"current":false,"hash":"h1","forms":[]}"#
             return (response, Data(body.utf8))
         }
         let client = try await makeClient()

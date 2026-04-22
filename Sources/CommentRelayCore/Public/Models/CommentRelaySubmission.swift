@@ -40,7 +40,7 @@ public struct CommentRelaySubmission: Codable, Sendable, Equatable {
         }
     }
 
-    public let categoryId: String
+    public let formId: String
     public let userIdentifier: String
     public let platform: Platform
     public let fields: [FieldValue]
@@ -54,7 +54,7 @@ public struct CommentRelaySubmission: Codable, Sendable, Equatable {
     public let sessionId: UUID?
 
     enum CodingKeys: String, CodingKey {
-        case categoryId = "category_id"
+        case formId = "form_id"
         case userIdentifier = "user_identifier"
         case platform, fields
         case osVersion = "os_version"
@@ -67,12 +67,12 @@ public struct CommentRelaySubmission: Codable, Sendable, Equatable {
         case sessionId = "session_id"
     }
 
-    public init(categoryId: String, userIdentifier: String, platform: Platform, fields: [FieldValue],
+    public init(formId: String, userIdentifier: String, platform: Platform, fields: [FieldValue],
                 osVersion: String? = nil, deviceModel: String? = nil, appVersion: String? = nil,
                 sdkVersion: String? = nil, locale: String? = nil,
                 contactPreference: ContactPreference? = nil, contactDetails: String? = nil,
                 sessionId: UUID? = nil) {
-        self.categoryId = categoryId
+        self.formId = formId
         self.userIdentifier = userIdentifier
         self.platform = platform
         self.fields = fields

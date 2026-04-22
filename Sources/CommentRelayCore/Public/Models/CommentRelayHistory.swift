@@ -10,16 +10,16 @@ public struct DeveloperNote: Codable, Sendable, Equatable, Identifiable {
 
 public struct CommentRelayHistoryEntry: Codable, Sendable, Equatable, Identifiable {
     public let id: UUID
-    public let categoryId: String
-    public let categoryTitle: String
+    public let formId: String
+    public let formTitle: String
     public let status: String
     public let createdAt: Date
     public let notes: [DeveloperNote]
 
     enum CodingKeys: String, CodingKey {
         case id
-        case categoryId = "category_id"
-        case categoryTitle = "category_title"
+        case formId = "form_id"
+        case formTitle = "form_title"
         case status
         case createdAt = "created_at"
         case notes

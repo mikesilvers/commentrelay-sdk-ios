@@ -1,17 +1,17 @@
 import SwiftUI
 import CommentRelayCore
 
-public struct CategoryPickerView: View {
-    public let categories: [CommentRelayCategory]
-    public let onSelect: @Sendable (CommentRelayCategory) -> Void
+public struct FormPickerView: View {
+    public let forms: [CommentRelayForm]
+    public let onSelect: @Sendable (CommentRelayForm) -> Void
 
-    public init(categories: [CommentRelayCategory], onSelect: @escaping @Sendable (CommentRelayCategory) -> Void) {
-        self.categories = categories
+    public init(forms: [CommentRelayForm], onSelect: @escaping @Sendable (CommentRelayForm) -> Void) {
+        self.forms = forms
         self.onSelect = onSelect
     }
 
-    private var visible: [CommentRelayCategory] {
-        categories
+    private var visible: [CommentRelayForm] {
+        forms
             .filter { $0.isActive && $0.showInPicker }
             .sorted { $0.sortOrder < $1.sortOrder }
     }
@@ -26,9 +26,9 @@ public struct CategoryPickerView: View {
                 )
             } else {
                 List {
-                    ForEach(visible) { category in
-                        CategoryRow(category: category) {
-                            onSelect(category)
+                    ForEach(visible) { form in
+                        FormRow(form: form) {
+                            onSelect(form)
                         }
                     }
                 }
@@ -39,14 +39,14 @@ public struct CategoryPickerView: View {
     }
 }
 
-private struct CategoryRow: View {
-    let category: CommentRelayCategory
+private struct FormRow: View {
+    let form: CommentRelayForm
     let onTap: @Sendable () -> Void
 
     var body: some View {
         Button(action: onTap) {
             HStack {
-                Text(category.title)
+                Text(form.title)
                 Spacer()
                 Image(systemName: "chevron.right").foregroundStyle(.tertiary)
             }

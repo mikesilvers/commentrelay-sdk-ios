@@ -59,8 +59,8 @@ public actor CommentRelayClient {
         let queryItems: [URLQueryItem]? = cachedHash.map { [URLQueryItem(name: "hash", value: $0)] }
         let response: CommentRelayConfigResponse = try await api.send(
             method: "GET", path: basePath, queryItems: queryItems, decodingAs: CommentRelayConfigResponse.self)
-        if case .updated(let hash, let categories) = response {
-            await configCache.write(hash: hash, categories: categories)
+        if case .updated(let hash, let forms) = response {
+            await configCache.write(hash: hash, forms: forms)
         }
         return response
     }
@@ -141,17 +141,17 @@ public actor CommentRelayClient {
         isEnabled = true
     }
 
-    public func saveDraft(categoryId: String, fieldValues: [String: String]) async {
-        let draft = CommentRelayDraft(categoryId: categoryId, fieldValues: fieldValues, updatedAt: Date())
+    public func saveDraft(formId: String, fieldValues: [String: String]) async {
+        let draft = CommentRelayDraft(formId: formId, fieldValues: fieldValues, updatedAt: Date())
         await draftStore.save(draft)
     }
 
-    public func loadDraft(categoryId: String) async -> CommentRelayDraft? {
-        await draftStore.load(categoryId: categoryId)
+    public func loadDraft(formId: String) async -> CommentRelayDraft? {
+        await draftStore.load(formId: formId)
     }
 
-    public func deleteDraft(categoryId: String) async {
-        await draftStore.delete(categoryId: categoryId)
+    public func deleteDraft(formId: String) async {
+        await draftStore.delete(formId: formId)
     }
 
     // MARK: - Internal helpers

@@ -8,7 +8,7 @@ final class HistoryListViewTests: XCTestCase {
     private func history(entries: Int, anonymous: Bool) -> CommentRelayHistory {
         var items = ""
         for i in 0..<entries {
-            items += #"{"id":"\#(UUID().uuidString)","category_id":"c","category_title":"Bug","status":"complete","created_at":"2026-03-19T10:30:0\#(i)Z","notes":[]}"#
+            items += #"{"id":"\#(UUID().uuidString)","form_id":"c","form_title":"Bug","status":"complete","created_at":"2026-03-19T10:30:0\#(i)Z","notes":[]}"#
             if i < entries - 1 { items += "," }
         }
         let raw = #"{"anonymousUser":\#(anonymous),"submissions":[\#(items)]}"#

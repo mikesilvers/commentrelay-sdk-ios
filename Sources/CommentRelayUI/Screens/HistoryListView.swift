@@ -40,7 +40,7 @@ private struct HistoryRow: View {
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(entry.categoryTitle).font(.headline)
+                Text(entry.formTitle).font(.headline)
                 Text(entry.createdAt, style: .date)
                     .font(.caption)
                     .foregroundStyle(.secondary)

@@ -15,14 +15,14 @@ final class DraftAPITests: XCTestCase {
 
     func test_saveLoadDelete_roundTrip() async throws {
         let client = try await makeClient()
-        await client.saveDraft(categoryId: "cat1", fieldValues: ["f1": "hello"])
+        await client.saveDraft(formId: "cat1", fieldValues: ["f1": "hello"])
         // DraftStore default debounce is 0.5s; wait long enough for the flush.
         try await Task.sleep(nanoseconds: 700_000_000)
-        let loaded = await client.loadDraft(categoryId: "cat1")
+        let loaded = await client.loadDraft(formId: "cat1")
         XCTAssertEqual(loaded?.fieldValues["f1"], "hello")
 
-        await client.deleteDraft(categoryId: "cat1")
-        let afterDelete = await client.loadDraft(categoryId: "cat1")
+        await client.deleteDraft(formId: "cat1")
+        let afterDelete = await client.loadDraft(formId: "cat1")
         XCTAssertNil(afterDelete)
     }
 }
