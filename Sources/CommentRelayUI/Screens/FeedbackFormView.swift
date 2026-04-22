@@ -18,14 +18,10 @@ public struct FeedbackFormView: View {
                     Text(prompt).font(.callout).foregroundStyle(.secondary)
                 }
 
-                ForEach(viewModel.category.fields.sorted(by: { $0.sortOrder < $1.sortOrder }), id: \.id) { field in
-                    renderer(for: field)
+                ForEach(visibleFields(in: viewModel.category.fields, boolValues: viewModel.boolValues), id: \.field.id) { item in
+                    renderer(for: item.field)
+                        .padding(.leading, CGFloat(item.depth) * 12)
                 }
-
-                ContactPreferenceSection(
-                    preference: Binding(get: { viewModel.contactPreference }, set: { viewModel.contactPreference = $0 }),
-                    details: Binding(get: { viewModel.contactDetails }, set: { viewModel.contactDetails = $0 })
-                )
 
                 Button(Strings.formSubmit) {
                     onSubmit(viewModel.buildSubmission())

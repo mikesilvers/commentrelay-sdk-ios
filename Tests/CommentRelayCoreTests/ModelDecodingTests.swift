@@ -47,6 +47,23 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertFalse(f.isGate)
         XCTAssertEqual(f.sortOrder, 1)
         XCTAssertNil(f.maxFiles)
+        XCTAssertNil(f.parentFieldId)
+    }
+
+    func test_field_decodesParentFieldId() throws {
+        let raw = #"""
+        {"id":"child","field_type":"email","label":"Email","is_required":false,"is_gate":false,"sort_order":1,"max_files":null,"parent_field_id":"parent-123"}
+        """#
+        let f = try decoder.decode(CommentRelayField.self, from: Data(raw.utf8))
+        XCTAssertEqual(f.parentFieldId, "parent-123")
+    }
+
+    func test_field_parentFieldId_isNilWhenKeyMissing() throws {
+        let raw = #"""
+        {"id":"root","field_type":"textbox","label":"Comments","is_required":true,"is_gate":false,"sort_order":0,"max_files":null}
+        """#
+        let f = try decoder.decode(CommentRelayField.self, from: Data(raw.utf8))
+        XCTAssertNil(f.parentFieldId)
     }
 
     func test_category_decodesFullConfigPayload() throws {
