@@ -4,14 +4,16 @@ import CommentRelayCore
 
 public struct CommentRelayView: View {
     public let configuration: CommentRelayConfiguration
+    let preselect: FormPreselect?
 
     @State private var route: Route = .loading
     @State private var client: CommentRelayClient
     @State private var activeViewModel: FeedbackFormViewModel? = nil
 
     @MainActor
-    public init(configuration: CommentRelayConfiguration) {
+    public init(configuration: CommentRelayConfiguration, formId: String? = nil, formTitle: String? = nil) {
         self.configuration = configuration
+        self.preselect = FormPreselect(formId: formId, formTitle: formTitle)
         self._client = State(initialValue: CommentRelayClient(configuration: configuration))
     }
 
@@ -98,7 +100,21 @@ public struct CommentRelayView: View {
             case .current:
                 route = .picker(forms: [])
             case .updated(_, let forms):
-                route = .picker(forms: forms)
+                if let preselect, let match = preselect.match(in: forms) {
+                    let vm = FeedbackFormViewModel(
+                        form: match,
+                        userIdentifier: configuration.userIdentifier ?? "anonymous",
+                        platform: .ios,
+                        sdkVersion: configuration.effectiveSDKVersion
+                    )
+                    activeViewModel = vm
+                    route = .form(form: match)
+                } else {
+                    if preselect != nil {
+                        CommentRelayLoggerHolder.shared.log(level: .warning, message: "requested form not found in config; falling back to picker", error: nil)
+                    }
+                    route = .picker(forms: forms)
+                }
             }
         } catch let err as CommentRelayError {
             CommentRelayLoggerHolder.shared.log(level: .error, message: "fetchConfig failed", error: err)
