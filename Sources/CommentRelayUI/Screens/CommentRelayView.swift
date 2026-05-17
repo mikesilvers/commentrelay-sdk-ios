@@ -56,7 +56,7 @@ public struct CommentRelayView: View {
                 let vm = FeedbackFormViewModel(
                     form: selected,
                     userIdentifier: configuration.userIdentifier ?? "anonymous",
-                    platform: .ios,
+                    platform: Platform.current,
                     sdkVersion: configuration.effectiveSDKVersion
                 )
                 activeViewModel = vm
@@ -104,7 +104,7 @@ public struct CommentRelayView: View {
                     let vm = FeedbackFormViewModel(
                         form: match,
                         userIdentifier: configuration.userIdentifier ?? "anonymous",
-                        platform: .ios,
+                        platform: Platform.current,
                         sdkVersion: configuration.effectiveSDKVersion
                     )
                     activeViewModel = vm
