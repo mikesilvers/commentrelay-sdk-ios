@@ -52,6 +52,11 @@ public final class FeedbackFormViewModel {
         return true
     }
 
+    private struct RatingValue: Encodable {
+        let position: Int
+        let label: String?
+    }
+
     public func buildSubmission() -> CommentRelaySubmission {
         var fieldValues: [CommentRelaySubmission.FieldValue] = []
         for field in form.fields.sorted(by: { $0.sortOrder < $1.sortOrder }) {
@@ -64,8 +69,14 @@ public final class FeedbackFormViewModel {
                 fieldValues.append(.text(fieldId: field.id, value: v ? "true" : "false"))
             case .smileyRating, .colorScale:
                 if let v = intValues[field.id] {
-                    let payload = #"{"position":\#(v)}"#
-                    fieldValues.append(.text(fieldId: field.id, value: payload))
+                    let label = field.options?.first(where: { $0.position == v })?.label
+                    let rating = RatingValue(position: v, label: label)
+                    if let data = try? JSONEncoder().encode(rating),
+                       let payload = String(data: data, encoding: .utf8) {
+                        fieldValues.append(.text(fieldId: field.id, value: payload))
+                    } else {
+                        fieldValues.append(.text(fieldId: field.id, value: #"{"position":\#(v)}"#))
+                    }
                 }
             case .photo, .attachment:
                 let atts = photoValues[field.id] ?? []
