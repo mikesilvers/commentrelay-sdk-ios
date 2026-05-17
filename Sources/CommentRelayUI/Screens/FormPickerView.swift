@@ -12,7 +12,7 @@ public struct FormPickerView: View {
 
     private var visible: [CommentRelayForm] {
         forms
-            .filter { $0.isActive && $0.showInPicker }
+            .filter { $0.isPickerVisible }
             .sorted { $0.sortOrder < $1.sortOrder }
     }
 
