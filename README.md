@@ -45,3 +45,9 @@ Run the test suite from the repo root:
 ```sh
 swift test
 ```
+
+## Privacy
+
+Both library targets ship an Apple privacy manifest (`PrivacyInfo.xcprivacy`) as an SPM resource. The SDK does **not** track users (`NSPrivacyTracking = false`, no tracking domains) and uses no required-reason APIs. Collected data (feedback content, photos/attachments, optional contact details, an app-assigned user identifier, and diagnostic context like OS/app version and locale) is declared as linked to the user and used only for App Functionality. Xcode aggregates these manifests into your app's privacy report automatically.
+
+Source distribution via SPM requires no binary signature; XCFramework/binary signing and notarization are not applicable to this source package.
