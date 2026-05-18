@@ -53,4 +53,72 @@ final class SubmissionQueuePersistenceTests: XCTestCase {
         let bytes = await q.readSidecar(localId: id, fileName: "x.txt")
         XCTAssertEqual(bytes, Data("hey".utf8))
     }
+
+    // MARK: - Security / correctness (Task 4)
+
+    func testRejectsAttachmentWithPathSeparatorInName() async throws {
+        let dir = tmp()
+        let q = SubmissionQueue(directory: dir, maxEntries: 50, maxAge: 9_999_999)
+
+        // Case 1: parent-directory traversal
+        let traversal = CommentRelayQueuedAttachment(fieldId: "1", fileName: "../escape.bin",
+                                                     contentType: "application/octet-stream",
+                                                     data: Data([0xFF]))
+        do {
+            _ = try await q.enqueue(sub(), attachments: [traversal])
+            XCTFail("Expected badRequest for traversal fileName, but enqueue succeeded")
+        } catch CommentRelayError.badRequest {
+            // correct
+        }
+        // The traversal target must not exist
+        let escapedFile = dir.appendingPathComponent("queue/escape.bin")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: escapedFile.path),
+                       "Traversal must not have written outside the entry dir")
+
+        // Case 2: embedded forward slash
+        let slashed = CommentRelayQueuedAttachment(fieldId: "1", fileName: "a/b.bin",
+                                                   contentType: "application/octet-stream",
+                                                   data: Data([0xAB]))
+        do {
+            _ = try await q.enqueue(sub(), attachments: [slashed])
+            XCTFail("Expected badRequest for slashed fileName, but enqueue succeeded")
+        } catch CommentRelayError.badRequest {
+            // correct
+        }
+    }
+
+    func testRejectsDuplicateSidecarFileNames() async throws {
+        let dir = tmp()
+        let q = SubmissionQueue(directory: dir, maxEntries: 50, maxAge: 9_999_999)
+        let att1 = CommentRelayQueuedAttachment(fieldId: "f1", fileName: "dup.bin",
+                                                contentType: "application/octet-stream",
+                                                data: Data([0x01]))
+        let att2 = CommentRelayQueuedAttachment(fieldId: "f2", fileName: "dup.bin",
+                                                contentType: "application/octet-stream",
+                                                data: Data([0x02]))
+        do {
+            _ = try await q.enqueue(sub(), attachments: [att1, att2])
+            XCTFail("Expected badRequest for duplicate fileName, but enqueue succeeded")
+        } catch CommentRelayError.badRequest {
+            // correct
+        }
+        // No partial entry dir should remain and loadAll should be empty
+        let all = await q.loadAll()
+        XCTAssertTrue(all.isEmpty, "No entry should be persisted after a validation failure")
+        let queueDir = dir.appendingPathComponent("queue")
+        let contents = (try? FileManager.default.contentsOfDirectory(atPath: queueDir.path)) ?? []
+        XCTAssertTrue(contents.isEmpty, "Entry folder must not remain after rejected enqueue")
+    }
+
+    func testAcceptsPlainFileName() async throws {
+        let dir = tmp()
+        let q = SubmissionQueue(directory: dir, maxEntries: 50, maxAge: 9_999_999)
+        let att = CommentRelayQueuedAttachment(fieldId: "3", fileName: "photo.jpg",
+                                               contentType: "image/jpeg",
+                                               data: Data([0xDE, 0xAD]))
+        let id = try await q.enqueue(sub(), attachments: [att])
+        let bytes = await q.readSidecar(localId: id, fileName: "photo.jpg")
+        XCTAssertEqual(bytes, Data([0xDE, 0xAD]),
+                       "Plain fileName must be accepted and sidecar must be readable")
+    }
 }

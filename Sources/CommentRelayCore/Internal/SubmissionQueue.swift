@@ -15,18 +15,34 @@ actor SubmissionQueue {
 
     private func entryDir(_ id: UUID) -> URL { root.appendingPathComponent(id.uuidString) }
 
+    /// Rejects any attachment fileName that contains a path separator or normalizes differently
+    /// than its bare form. Empty names and the special components "." and ".." are also rejected.
+    private func safeSidecarName(_ raw: String) throws -> String {
+        let bare = (raw as NSString).lastPathComponent
+        guard bare == raw, !bare.isEmpty, bare != ".", bare != ".." else {
+            throw CommentRelayError.badRequest(message: "invalid attachment file name: \(raw)")
+        }
+        return bare
+    }
+
     /// Caps enforced by the caller (Task 5). Persists entry.json + one sidecar per attachment.
     func enqueue(_ submission: CommentRelaySubmission,
                  attachments: [CommentRelayQueuedAttachment]) throws -> UUID {
+        // --- Validate ALL attachment names up front before writing anything ---
+        let safeNames = try attachments.map { try safeSidecarName($0.fileName) }
+        if Set(safeNames).count != safeNames.count {
+            throw CommentRelayError.badRequest(message: "duplicate attachment file name")
+        }
+
         let id = UUID()
         let dir = entryDir(id)
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        for att in attachments {
-            try att.data.write(to: dir.appendingPathComponent(att.fileName), options: .atomic)
+        for (att, safeName) in zip(attachments, safeNames) {
+            try att.data.write(to: dir.appendingPathComponent(safeName), options: .atomic)
         }
-        let refs = attachments.map {
-            QueuedFileRef(fieldId: $0.fieldId, fileName: $0.fileName,
-                          contentType: $0.contentType, size: $0.data.count)
+        let refs = zip(attachments, safeNames).map { att, safeName in
+            QueuedFileRef(fieldId: att.fieldId, fileName: safeName,
+                          contentType: att.contentType, size: att.data.count)
         }
         let entry = QueuedSubmission(
             localId: id, submission: submission,
