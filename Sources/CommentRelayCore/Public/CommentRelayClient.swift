@@ -12,6 +12,26 @@ public actor CommentRelayClient {
     nonisolated(unsafe) private var uploadManager: BackgroundUploadManager!
     private(set) public var isEnabled: Bool = true
 
+    // MARK: - Reachability / flush triggers
+
+    private let reachability: Reachability
+    private var flushTriggerTask: Task<Void, Never>?
+
+    nonisolated private func startFlushTriggers() {
+        let task = Task { [weak self] in
+            await self?.flushQueue()                       // init trigger
+            guard let stream = self?.reachability.changes else { return }
+            for await connected in stream where connected {
+                await self?.flushQueue()                   // connectivity-restored trigger
+            }
+        }
+        Task { await self._assignFlushTriggerTask(task) }
+    }
+
+    private func _assignFlushTriggerTask(_ task: Task<Void, Never>) {
+        flushTriggerTask = task
+    }
+
     // MARK: - Flush reentrancy guard
 
     private var isFlushing = false
@@ -59,19 +79,22 @@ public actor CommentRelayClient {
         self.draftStore = DraftStore(directory: dir.appendingPathComponent("drafts"))
         self.submissionQueue = SubmissionQueue(directory: dir,
             maxEntries: configuration.maxQueuedSubmissions, maxAge: configuration.maxQueueAge)
+        self.reachability = NetworkReachability()
         // Finalize closure weakly captures self so the manager doesn't retain the client indefinitely.
         let transport: UploadTransport = URLSessionUploadTransport(session: session)
         self.uploadManager = BackgroundUploadManager(transport: transport) { [weak self] submissionId in
             guard let self else { return }
             try await self.finalize(submissionId: submissionId)
         }
+        startFlushTriggers()
     }
 
     // Test-only escape hatch keeping the test suite hermetic.
     init(configuration: CommentRelayConfiguration,
          session: URLSession,
          cacheDirectory: URL,
-         keychainService: String) {
+         keychainService: String,
+         reachability: Reachability = NetworkReachability()) {
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
         self.configuration = configuration
         self.api = APIClient(baseURL: configuration.baseURL, apiKey: configuration.apiKey, session: session)
@@ -80,12 +103,14 @@ public actor CommentRelayClient {
         self.draftStore = DraftStore(directory: cacheDirectory.appendingPathComponent("drafts"))
         self.submissionQueue = SubmissionQueue(directory: cacheDirectory,
             maxEntries: configuration.maxQueuedSubmissions, maxAge: configuration.maxQueueAge)
+        self.reachability = reachability
         // Finalize closure weakly captures self so the manager doesn't retain the client indefinitely.
         let transport: UploadTransport = URLSessionUploadTransport(session: session)
         self.uploadManager = BackgroundUploadManager(transport: transport) { [weak self] submissionId in
             guard let self else { return }
             try await self.finalize(submissionId: submissionId)
         }
+        startFlushTriggers()
     }
 
     // MARK: - Public API
