@@ -39,12 +39,16 @@ public struct CommentRelayView: View {
                             route = .history
                         } label: {
                             Image(systemName: "clock.arrow.circlepath")
-                                .accessibilityLabel(Strings.historyTitle)
+                                .accessibilityHidden(true)
                                 .overlay(alignment: .topTrailing) {
                                     PendingBadge(count: pendingCount)
                                         .offset(x: 8, y: -8)
+                                        .accessibilityHidden(true)
                                 }
                         }
+                        .accessibilityLabel(pendingCount > 0
+                            ? "\(Strings.historyTitle), \(pendingCount) pending"
+                            : Strings.historyTitle)
                     }
                 }
                 .task {
