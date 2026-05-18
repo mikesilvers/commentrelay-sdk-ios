@@ -19,10 +19,10 @@ public actor CommentRelayClient {
 
     nonisolated private func startFlushTriggers() {
         let task = Task { [weak self] in
-            await self?.flushQueue()                       // init trigger
-            guard let stream = self?.reachability.changes else { return }
+            guard let stream = self?.reachability.changes else { return }  // subscribe FIRST (registers continuation, buffers events)
+            await self?.flushQueue()                                       // init trigger (events during this are now buffered)
             for await connected in stream where connected {
-                await self?.flushQueue()                   // connectivity-restored trigger
+                await self?.flushQueue()                                   // connectivity-restored trigger
             }
         }
         Task { await self._assignFlushTriggerTask(task) }
