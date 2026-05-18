@@ -15,6 +15,8 @@ final class FlushTriggerTests: XCTestCase {
         super.tearDown()
     }
 
+    private let maxPollSteps = 60   // 60 × 50 ms = 3 s ceiling
+
     private func tmp() -> URL {
         let u = FileManager.default.temporaryDirectory.appendingPathComponent("trig-\(UUID())")
         try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true); return u
@@ -141,7 +143,7 @@ final class FlushTriggerTests: XCTestCase {
         gateCont.finish()
 
         // --- 8. Bounded poll: wait up to 3 s for pendingCount == 0 (50 ms steps) ---
-        var remaining = 60  // 60 × 50 ms = 3 s ceiling
+        var remaining = maxPollSteps
         while await c.pendingSubmissionCount > 0 && remaining > 0 {
             try await Task.sleep(nanoseconds: 50_000_000)
             remaining -= 1
@@ -174,7 +176,7 @@ final class FlushTriggerTests: XCTestCase {
 
         // Wait deterministically: poll pendingSubmissionCount until it reaches 0,
         // with a bounded timeout (~3 s in 50 ms steps) so a genuine failure doesn't hang.
-        var remaining = 60  // 60 × 50ms = 3 s ceiling
+        var remaining = maxPollSteps
         while await c.pendingSubmissionCount > 0 && remaining > 0 {
             try await Task.sleep(nanoseconds: 50_000_000)
             remaining -= 1

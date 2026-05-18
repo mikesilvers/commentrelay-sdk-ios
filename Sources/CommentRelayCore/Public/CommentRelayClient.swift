@@ -15,21 +15,20 @@ public actor CommentRelayClient {
     // MARK: - Reachability / flush triggers
 
     private let reachability: Reachability
-    private var flushTriggerTask: Task<Void, Never>?
+    nonisolated(unsafe) private var flushTriggerTask: Task<Void, Never>?
 
     nonisolated private func startFlushTriggers() {
-        let task = Task { [weak self] in
+        flushTriggerTask = Task { [weak self] in
             guard let stream = self?.reachability.changes else { return }  // subscribe FIRST (registers continuation, buffers events)
             await self?.flushQueue()                                       // init trigger (events during this are now buffered)
             for await connected in stream where connected {
                 await self?.flushQueue()                                   // connectivity-restored trigger
             }
         }
-        Task { await self._assignFlushTriggerTask(task) }
     }
 
-    private func _assignFlushTriggerTask(_ task: Task<Void, Never>) {
-        flushTriggerTask = task
+    deinit {
+        flushTriggerTask?.cancel()
     }
 
     // MARK: - Flush reentrancy guard
