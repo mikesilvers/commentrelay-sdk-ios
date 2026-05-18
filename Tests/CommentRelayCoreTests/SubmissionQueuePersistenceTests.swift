@@ -130,6 +130,31 @@ final class SubmissionQueuePersistenceTests: XCTestCase {
         XCTAssertTrue(contents.isEmpty, "Entry folder must not remain after rejected enqueue")
     }
 
+    func testRejectsAttachmentNamedEntryJsonCaseInsensitive() async throws {
+        let dir = tmp()
+        let q = SubmissionQueue(directory: dir, maxEntries: 50, maxAge: 9_999_999)
+
+        for badName in ["Entry.json", "ENTRY.JSON", "entry.JSON"] {
+            let queueDir = dir.appendingPathComponent("queue")
+            let att = CommentRelayQueuedAttachment(fieldId: "1", fileName: badName,
+                                                   contentType: "application/pdf",
+                                                   data: Data([0x01, 0x02, 0x03]))
+            do {
+                _ = try await q.enqueue(sub(), attachments: [att])
+                XCTFail("Expected badRequest for reserved fileName \(badName), but enqueue succeeded")
+            } catch CommentRelayError.badRequest {
+                // correct
+            }
+            // No partial entry dir should remain and loadAll should be empty
+            let all = await q.loadAll()
+            XCTAssertTrue(all.isEmpty,
+                          "No entry should be persisted after rejection of \(badName)")
+            let contents = (try? FileManager.default.contentsOfDirectory(atPath: queueDir.path)) ?? []
+            XCTAssertTrue(contents.isEmpty,
+                          "Entry folder must not remain after rejected enqueue of \(badName)")
+        }
+    }
+
     func testAcceptsPlainFileName() async throws {
         let dir = tmp()
         let q = SubmissionQueue(directory: dir, maxEntries: 50, maxAge: 9_999_999)
