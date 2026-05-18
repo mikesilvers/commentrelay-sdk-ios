@@ -25,7 +25,7 @@ final class ReachabilityTests: XCTestCase {
             }
         }
 
-        // Wait until the task has started and acknowledged readiness.
+        // Wait until the consuming task is actively iterating the stream before firing events.
         var readyIterator = readyStream.makeAsyncIterator()
         _ = await readyIterator.next()
 

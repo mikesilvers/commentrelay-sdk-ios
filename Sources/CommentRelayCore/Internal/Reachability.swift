@@ -35,10 +35,11 @@ final class NetworkReachability: Reachability, @unchecked Sendable {
     var changes: AsyncStream<Bool> {
         AsyncStream { continuation in
             let id = UUID()
-            lock.lock(); continuations[id] = continuation; lock.unlock()
             continuation.onTermination = { [weak self] _ in
-                self?.lock.lock(); self?.continuations[id] = nil; self?.lock.unlock()
+                guard let self else { return }
+                self.lock.lock(); self.continuations[id] = nil; self.lock.unlock()
             }
+            lock.lock(); continuations[id] = continuation; lock.unlock()
         }
     }
 
@@ -58,10 +59,11 @@ final class FakeReachability: Reachability, @unchecked Sendable {
     var changes: AsyncStream<Bool> {
         AsyncStream { continuation in
             let id = UUID()
-            lock.lock(); continuations[id] = continuation; lock.unlock()
             continuation.onTermination = { [weak self] _ in
-                self?.lock.lock(); self?.continuations[id] = nil; self?.lock.unlock()
+                guard let self else { return }
+                self.lock.lock(); self.continuations[id] = nil; self.lock.unlock()
             }
+            lock.lock(); continuations[id] = continuation; lock.unlock()
         }
     }
 
