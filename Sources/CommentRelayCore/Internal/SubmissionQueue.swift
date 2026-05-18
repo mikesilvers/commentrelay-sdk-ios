@@ -25,9 +25,46 @@ actor SubmissionQueue {
         return bare
     }
 
-    /// Caps enforced by the caller (Task 5). Persists entry.json + one sidecar per attachment.
+    // MARK: - Attachment caps (Task 5)
+
+    static let allowedMIME: Set<String> = [
+        "image/jpeg", "image/png", "image/heic", "image/heif", "image/webp",
+        "application/pdf", "text/plain"
+    ]
+
+    private func validate(_ attachments: [CommentRelayQueuedAttachment]) throws {
+        for a in attachments {
+            if a.data.count > 10_000_000 {
+                throw CommentRelayError.badRequest(message: "attachment \(a.fileName) exceeds 10MB")
+            }
+            if !Self.allowedMIME.contains(a.contentType) {
+                throw CommentRelayError.badRequest(message: "attachment type \(a.contentType) not allowed")
+            }
+        }
+        let byField = Dictionary(grouping: attachments, by: \.fieldId)
+        for (field, group) in byField where group.count > 3 {
+            throw CommentRelayError.badRequest(message: "field \(field) exceeds 3 files")
+        }
+    }
+
+    private func evictIfNeeded() {
+        var entries = loadAll() // FIFO (oldest first)
+        while entries.count > maxEntries {
+            delete(localId: entries.removeFirst().localId)
+        }
+    }
+
+    func pruneExpired() {
+        let cutoff = Date().addingTimeInterval(-maxAge)
+        for e in loadAll() where e.createdAt < cutoff { delete(localId: e.localId) }
+    }
+
+    /// Persists entry.json + one sidecar per attachment. Validates size/MIME/per-field caps first.
     func enqueue(_ submission: CommentRelaySubmission,
                  attachments: [CommentRelayQueuedAttachment]) throws -> UUID {
+        // --- Cap validation: size, MIME type, per-field count ---
+        try validate(attachments)
+
         // --- Validate ALL attachment names up front before writing anything ---
         let safeNames = try attachments.map { try safeSidecarName($0.fileName) }
         if Set(safeNames).count != safeNames.count {
@@ -50,6 +87,7 @@ actor SubmissionQueue {
             serverSubmissionId: nil, attachments: refs,
             attemptCount: 0, nextEarliestAttempt: nil, createdAt: Date(), lastError: nil)
         try persist(entry)
+        evictIfNeeded()
         return id
     }
 
