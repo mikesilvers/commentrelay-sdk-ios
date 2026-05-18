@@ -9,7 +9,10 @@ struct QueuedFileRef: Codable, Sendable, Equatable {
 
 struct QueuedSubmission: Codable, Sendable, Equatable {
     enum Phase: String, Codable, Sendable {
-        case needsSubmit, needsUpload, needsFinalize, done
+        case needsSubmit   = "needsSubmit"
+        case needsUpload   = "needsUpload"
+        case needsFinalize = "needsFinalize"
+        case done          = "done"
     }
     let localId: UUID
     var submission: CommentRelaySubmission

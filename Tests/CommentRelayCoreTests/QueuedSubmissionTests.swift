@@ -23,7 +23,15 @@ final class QueuedSubmissionTests: XCTestCase {
     }
 
     func testPhaseEncodesStably() throws {
-        let data = try JSONEncoder().encode(QueuedSubmission.Phase.needsFinalize)
-        XCTAssertEqual(String(data: data, encoding: .utf8), "\"needsFinalize\"")
+        let cases: [(QueuedSubmission.Phase, String)] = [
+            (.needsSubmit, "\"needsSubmit\""),
+            (.needsUpload, "\"needsUpload\""),
+            (.needsFinalize, "\"needsFinalize\""),
+            (.done, "\"done\""),
+        ]
+        for (phase, expected) in cases {
+            let data = try JSONEncoder().encode(phase)
+            XCTAssertEqual(String(data: data, encoding: .utf8), expected)
+        }
     }
 }
