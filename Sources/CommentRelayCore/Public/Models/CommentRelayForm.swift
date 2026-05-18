@@ -18,6 +18,11 @@ public struct CommentRelayForm: Codable, Sendable, Equatable, Identifiable {
     public let sortOrder: Int
     public let fields: [CommentRelayField]
 
+    /// Whether this form may be surfaced to the end user. Single source of
+    /// truth for both the picker list and explicit preselect-by-id/title, so
+    /// the two paths can never disagree about what is visible.
+    public var isPickerVisible: Bool { isActive && showInPicker }
+
     enum CodingKeys: String, CodingKey {
         case id, title
         case showInPicker = "show_in_picker"

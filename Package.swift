@@ -17,11 +17,17 @@ let package = Package(
         .package(url: "https://github.com/nalexn/ViewInspector", from: "0.10.1"),
     ],
     targets: [
-        .target(name: "CommentRelayCore"),
+        .target(
+            name: "CommentRelayCore",
+            resources: [.copy("PrivacyInfo.xcprivacy")]
+        ),
         .target(
             name: "CommentRelayUI",
             dependencies: ["CommentRelayCore"],
-            resources: [.process("Resources")]
+            resources: [
+                .process("Resources"),
+                .copy("PrivacyInfo.xcprivacy"),
+            ]
         ),
         .testTarget(name: "CommentRelayCoreTests", dependencies: ["CommentRelayCore"]),
         .testTarget(

@@ -4,11 +4,12 @@ import XCTest
 @testable import CommentRelayUI
 
 final class FormPreselectTests: XCTestCase {
-    private func form(_ id: String, _ title: String) -> CommentRelayForm {
+    private func form(_ id: String, _ title: String,
+                      showInPicker: Bool = true, isActive: Bool = true) -> CommentRelayForm {
         CommentRelayForm(
-            id: id, title: title, showInPicker: true,
+            id: id, title: title, showInPicker: showInPicker,
             responseLimitCount: nil, responseLimitType: nil, responseLimitWindowMinutes: nil,
-            moreFeedbackPrompt: nil, isActive: true, sortOrder: 0, fields: []
+            moreFeedbackPrompt: nil, isActive: isActive, sortOrder: 0, fields: []
         )
     }
 
@@ -48,5 +49,28 @@ final class FormPreselectTests: XCTestCase {
     func test_match_returnsNil_forEmptyForms() {
         XCTAssertNil(FormPreselect.id("x").match(in: []))
         XCTAssertNil(FormPreselect.title("x").match(in: []))
+    }
+
+    func test_match_excludesForm_whenShowInPickerFalse() {
+        let forms = [form("a", "Hidden", showInPicker: false)]
+        XCTAssertNil(FormPreselect.id("a").match(in: forms),
+                     "preselect by id must not surface a show_in_picker:false form")
+        XCTAssertNil(FormPreselect.title("Hidden").match(in: forms),
+                     "preselect by title must not surface a show_in_picker:false form")
+    }
+
+    func test_match_excludesForm_whenInactive() {
+        let forms = [form("a", "Inactive", isActive: false)]
+        XCTAssertNil(FormPreselect.id("a").match(in: forms))
+        XCTAssertNil(FormPreselect.title("Inactive").match(in: forms))
+    }
+
+    func test_match_stillMatches_whenVisibleFormSharesTitleWithHiddenOne() {
+        // A hidden form must not shadow a visible one with the same title.
+        let forms = [
+            form("hidden", "Feedback", showInPicker: false),
+            form("visible", "Feedback", showInPicker: true),
+        ]
+        XCTAssertEqual(FormPreselect.title("feedback").match(in: forms)?.id, "visible")
     }
 }
