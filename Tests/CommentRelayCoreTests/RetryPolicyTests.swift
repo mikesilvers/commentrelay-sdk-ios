@@ -1,4 +1,5 @@
 import XCTest
+import Foundation
 @testable import CommentRelayCore
 
 final class RetryPolicyTests: XCTestCase {
@@ -10,9 +11,12 @@ final class RetryPolicyTests: XCTestCase {
         XCTAssertEqual(RetryPolicy.classify(.paymentRequired(message: "x")), .terminal)
         XCTAssertEqual(RetryPolicy.classify(.notFound(message: "x")), .terminal)
         XCTAssertEqual(RetryPolicy.classify(.forbidden(message: "x")), .pause)
+        XCTAssertEqual(RetryPolicy.classify(.conflict(message: "x")), .terminal)
+        XCTAssertEqual(RetryPolicy.classify(.uploadUrlExpired(submissionId: UUID())), .terminal)
     }
 
     func testBackoffCapsAt30AndUsesRetryAfterWhenLarger() {
+        XCTAssertEqual(RetryPolicy.backoff(attempt: 0, retryAfter: nil), 1)
         XCTAssertEqual(RetryPolicy.backoff(attempt: 1, retryAfter: nil), 1)
         XCTAssertEqual(RetryPolicy.backoff(attempt: 5, retryAfter: nil), 16)
         XCTAssertEqual(RetryPolicy.backoff(attempt: 7, retryAfter: nil), 30) // 2^6=64 capped
