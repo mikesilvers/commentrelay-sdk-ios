@@ -128,13 +128,7 @@ public struct CommentRelayView: View {
     private func submitWithViewModel(_ submission: CommentRelaySubmission) async {
         guard let vm = activeViewModel else { return }
         route = .progress(currentFile: nil)
-        // Build queued attachments from the view model's photo values for offline queueing support.
-        let attachments: [CommentRelayQueuedAttachment] = vm.photoValues.flatMap { fieldId, photos in
-            photos.map { photo in
-                CommentRelayQueuedAttachment(fieldId: fieldId, fileName: photo.name,
-                                             contentType: photo.mimeType, data: photo.data)
-            }
-        }
+        let attachments = vm.queuedAttachments()
         do {
             let outcome = try await client.submit(submission, attachments: attachments)
             switch outcome {
