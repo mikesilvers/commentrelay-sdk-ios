@@ -17,9 +17,11 @@ actor SubmissionQueue {
 
     /// Rejects any attachment fileName that contains a path separator or normalizes differently
     /// than its bare form. Empty names and the special components "." and ".." are also rejected.
+    /// The reserved name "entry.json" is also rejected — it is the queue metadata file written
+    /// by `persist(_:)` and must not be shadowed by an attachment sidecar.
     private func safeSidecarName(_ raw: String) throws -> String {
         let bare = (raw as NSString).lastPathComponent
-        guard bare == raw, !bare.isEmpty, bare != ".", bare != ".." else {
+        guard bare == raw, !bare.isEmpty, bare != ".", bare != "..", bare != "entry.json" else {
             throw CommentRelayError.badRequest(message: "invalid attachment file name: \(raw)")
         }
         return bare
