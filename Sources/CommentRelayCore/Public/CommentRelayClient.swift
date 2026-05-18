@@ -97,12 +97,8 @@ public actor CommentRelayClient {
 
     public func fetchConfig(cachedHash: String?) async throws -> CommentRelayConfigResponse {
         try ensureEnabled()
-        let effectiveHash: String?
-        if let provided = cachedHash {
-            effectiveHash = provided
-        } else {
-            effectiveHash = await configCache.read()?.hash
-        }
+        let cached = await configCache.read()
+        let effectiveHash: String? = cachedHash ?? cached?.hash
         let basePath = "sdk/v1/config"
         let queryItems: [URLQueryItem]? = effectiveHash.map { [URLQueryItem(name: "hash", value: $0)] }
         do {
@@ -112,12 +108,16 @@ public actor CommentRelayClient {
             if case .updated(let hash, let forms) = response {
                 await configCache.write(hash: hash, forms: forms)
             }
-            if case .current = response, let snap = await configCache.read() {
+            if case .current = response, let snap = cached {
                 return .updated(hash: snap.hash, forms: snap.forms)
+            }
+            if case .current = response {
+                CommentRelayLoggerHolder.shared.log(level: .error,
+                    message: "config returned .current but no cached snapshot; returning empty/current (server/cache inconsistency)", error: nil)
             }
             return response
         } catch let err as CommentRelayError {
-            if case .transport = err, let snap = await configCache.read() {
+            if case .transport = err, let snap = cached {
                 return .updated(hash: snap.hash, forms: snap.forms)
             }
             throw err
