@@ -97,14 +97,36 @@ public actor CommentRelayClient {
 
     public func fetchConfig(cachedHash: String?) async throws -> CommentRelayConfigResponse {
         try ensureEnabled()
-        let basePath = "sdk/v1/config"
-        let queryItems: [URLQueryItem]? = cachedHash.map { [URLQueryItem(name: "hash", value: $0)] }
-        let response: CommentRelayConfigResponse = try await api.send(
-            method: "GET", path: basePath, queryItems: queryItems, decodingAs: CommentRelayConfigResponse.self)
-        if case .updated(let hash, let forms) = response {
-            await configCache.write(hash: hash, forms: forms)
+        let effectiveHash: String?
+        if let provided = cachedHash {
+            effectiveHash = provided
+        } else {
+            effectiveHash = await configCache.read()?.hash
         }
-        return response
+        let basePath = "sdk/v1/config"
+        let queryItems: [URLQueryItem]? = effectiveHash.map { [URLQueryItem(name: "hash", value: $0)] }
+        do {
+            let response: CommentRelayConfigResponse = try await api.send(
+                method: "GET", path: basePath, queryItems: queryItems,
+                decodingAs: CommentRelayConfigResponse.self)
+            if case .updated(let hash, let forms) = response {
+                await configCache.write(hash: hash, forms: forms)
+            }
+            if case .current = response, let snap = await configCache.read() {
+                return .updated(hash: snap.hash, forms: snap.forms)
+            }
+            return response
+        } catch let err as CommentRelayError {
+            if case .transport = err, let snap = await configCache.read() {
+                return .updated(hash: snap.hash, forms: snap.forms)
+            }
+            throw err
+        }
+    }
+
+    /// Cached-or-fresh forms accessor so the UI can render offline.
+    public func effectiveConfig() async throws -> CommentRelayConfigResponse {
+        try await fetchConfig(cachedHash: nil)
     }
 
     // MARK: - Submit (auto-queueing)
