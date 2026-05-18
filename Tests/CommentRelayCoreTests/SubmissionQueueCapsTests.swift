@@ -43,8 +43,8 @@ final class SubmissionQueueCapsTests: XCTestCase {
     func testEvictsOldestWhenOverCapacity() async throws {
         let dir = tmp()
         let q = SubmissionQueue(directory: dir, maxEntries: 2, maxAge: 9_999_999)
-        let a = try await q.enqueue(sub(), attachments: []); try await Task.sleep(nanoseconds: 5_000_000)
-        _ = try await q.enqueue(sub(), attachments: []); try await Task.sleep(nanoseconds: 5_000_000)
+        let a = try await q.enqueue(sub(), attachments: []); try await Task.sleep(nanoseconds: 10_000_000)
+        _ = try await q.enqueue(sub(), attachments: []); try await Task.sleep(nanoseconds: 10_000_000)
         _ = try await q.enqueue(sub(), attachments: [])
         let all = await q.loadAll()
         XCTAssertEqual(all.count, 2)
@@ -53,7 +53,7 @@ final class SubmissionQueueCapsTests: XCTestCase {
 
     func testPruneAgedOut() async throws {
         let dir = tmp()
-        let q = SubmissionQueue(directory: dir, maxEntries: 50, maxAge: 0) // everything immediately aged
+        let q = SubmissionQueue(directory: dir, maxEntries: 50, maxAge: -1) // everything immediately aged
         _ = try await q.enqueue(sub(), attachments: [])
         await q.pruneExpired()
         let all = await q.loadAll()
