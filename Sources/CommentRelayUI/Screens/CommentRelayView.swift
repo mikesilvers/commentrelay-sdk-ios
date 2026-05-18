@@ -9,6 +9,9 @@ public struct CommentRelayView: View {
     @State private var route: Route = .loading
     @State private var client: CommentRelayClient
     @State private var activeViewModel: FeedbackFormViewModel? = nil
+    @State private var pendingCount = 0
+
+    @Environment(\.scenePhase) private var scenePhase
 
     @MainActor
     public init(configuration: CommentRelayConfiguration, formId: String? = nil, formTitle: String? = nil) {
@@ -37,12 +40,23 @@ public struct CommentRelayView: View {
                         } label: {
                             Image(systemName: "clock.arrow.circlepath")
                                 .accessibilityLabel(Strings.historyTitle)
+                                .overlay(alignment: .topTrailing) {
+                                    PendingBadge(count: pendingCount)
+                                        .offset(x: 8, y: -8)
+                                }
                         }
                     }
                 }
                 .task {
                     await loadForms()
                 }
+        }
+        .task {
+            let stream = await client.pendingSubmissionCountStream()
+            for await n in stream { pendingCount = n }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await client.flushQueue() } }
         }
     }
 
