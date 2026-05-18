@@ -128,15 +128,22 @@ public struct CommentRelayView: View {
     private func submitWithViewModel(_ submission: CommentRelaySubmission) async {
         guard let vm = activeViewModel else { return }
         route = .progress(currentFile: nil)
-        do {
-            let receipt = try await client.submit(submission)
-            let payloads = vm.filePayloads(for: receipt)
-            if receipt.hasUploads {
-                try await client.uploadFiles(receipt: receipt, payloads: payloads)
-            } else {
-                try await client.finalize(submissionId: receipt.submissionId)
+        // Build queued attachments from the view model's photo values for offline queueing support.
+        let attachments: [CommentRelayQueuedAttachment] = vm.photoValues.flatMap { fieldId, photos in
+            photos.map { photo in
+                CommentRelayQueuedAttachment(fieldId: fieldId, fileName: photo.name,
+                                             contentType: photo.mimeType, data: photo.data)
             }
-            route = .thanks(showHistory: configuration.userIdentifier != nil)
+        }
+        do {
+            let outcome = try await client.submit(submission, attachments: attachments)
+            switch outcome {
+            case .submitted:
+                route = .thanks(showHistory: configuration.userIdentifier != nil)
+            case .queued:
+                // Submission queued for retry when connectivity returns — treat as success for UX.
+                route = .thanks(showHistory: configuration.userIdentifier != nil)
+            }
         } catch let err as CommentRelayError {
             CommentRelayLoggerHolder.shared.log(level: .error, message: "submit failed", error: err)
             route = .progressFailed(message: message(for: err))
