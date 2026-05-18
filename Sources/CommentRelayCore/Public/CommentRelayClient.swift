@@ -12,6 +12,10 @@ public actor CommentRelayClient {
     nonisolated(unsafe) private var uploadManager: BackgroundUploadManager!
     private(set) public var isEnabled: Bool = true
 
+    // MARK: - Flush reentrancy guard
+
+    private var isFlushing = false
+
     // MARK: - Pending-count broadcaster
 
     private var pendingCountContinuations: [UUID: AsyncStream<Int>.Continuation] = [:]
@@ -114,10 +118,11 @@ public actor CommentRelayClient {
         do {
             let receipt = try await postSubmission(submission)
             if receipt.hasUploads {
-                let payloads = attachments.compactMap { att -> CommentRelayFilePayload? in
+                var payloads: [CommentRelayFilePayload] = []
+                for att in attachments {
                     guard let target = receipt.uploadUrls.first(where: {
-                        $0.fieldId == att.fieldId && $0.fileName == att.fileName }) else { return nil }
-                    return CommentRelayFilePayload(target: target, data: att.data, contentType: att.contentType)
+                        $0.fieldId == att.fieldId && $0.fileName == att.fileName }) else { continue }
+                    payloads.append(CommentRelayFilePayload(target: target, data: att.data, contentType: att.contentType))
                 }
                 try await uploadFiles(receipt: receipt, payloads: payloads)
             } else {
@@ -212,8 +217,14 @@ public actor CommentRelayClient {
     // MARK: - Queue flush
 
     public func flushQueue() async {
+        guard !isFlushing else { return }
+        isFlushing = true
+        defer { isFlushing = false }
         await submissionQueue.pruneExpired()
-        guard isEnabled else { return }     // 403 pause: retain entries, do nothing
+        guard isEnabled else {
+            await broadcastPendingCount()
+            return     // 403 pause: retain entries, do nothing
+        }
         let entries = await submissionQueue.loadAll()   // FIFO
         let now = Date()
         for var entry in entries {
@@ -283,6 +294,9 @@ public actor CommentRelayClient {
         case .needsFinalize:
             if let serverId = entry.serverSubmissionId {
                 try await finalize(submissionId: serverId)
+            } else {
+                CommentRelayLoggerHolder.shared.log(level: .error,
+                    message: "queued entry in needsFinalize without serverSubmissionId; dropping", error: nil)
             }
             await submissionQueue.delete(localId: entry.localId)
         case .done:
