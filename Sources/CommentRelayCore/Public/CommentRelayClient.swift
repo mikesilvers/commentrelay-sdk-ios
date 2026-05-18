@@ -161,8 +161,22 @@ public actor CommentRelayClient {
     public func submit(_ submission: CommentRelaySubmission,
                        attachments: [CommentRelayQueuedAttachment] = []) async throws -> SubmitOutcome {
         try ensureEnabled()
+        let receipt: CommentRelaySubmissionReceipt
         do {
-            let receipt = try await postSubmission(submission)
+            receipt = try await postSubmission(submission)
+        } catch let err as CommentRelayError {
+            switch RetryPolicy.classify(err) {
+            case .terminal, .pause:
+                throw err
+            case .retry:
+                guard configuration.offlineQueueingEnabled else { throw err }
+                let id = try await submissionQueue.enqueue(submission, attachments: attachments)
+                await broadcastPendingCount()
+                return .queued(localId: id)
+            }
+        }
+        // POST succeeded: the server now holds a record (receipt.submissionId).
+        do {
             if receipt.hasUploads {
                 var payloads: [CommentRelayFilePayload] = []
                 for att in attachments {
@@ -178,10 +192,15 @@ public actor CommentRelayClient {
         } catch let err as CommentRelayError {
             switch RetryPolicy.classify(err) {
             case .terminal, .pause:
-                throw err                              // terminal still throws; 403 already disabled via existing paths
+                throw err
             case .retry:
                 guard configuration.offlineQueueingEnabled else { throw err }
-                let id = try await submissionQueue.enqueue(submission, attachments: attachments)
+                // Server already has the record — resume via finalize-first (no re-POST for the
+                // no-attachment path; attachments still re-POST for fresh presigned URLs by design).
+                let id = try await submissionQueue.enqueue(
+                    submission, attachments: attachments,
+                    serverSubmissionId: receipt.submissionId,
+                    startingPhase: receipt.hasUploads ? .needsUpload : .needsFinalize)
                 await broadcastPendingCount()
                 return .queued(localId: id)
             }
@@ -280,6 +299,7 @@ public actor CommentRelayClient {
             } catch let err as CommentRelayError {
                 switch RetryPolicy.classify(err) {
                 case .pause:
+                    await broadcastPendingCount()
                     return                                  // circuit-breaker already engaged by callee
                 case .terminal:
                     await submissionQueue.delete(localId: entry.localId)

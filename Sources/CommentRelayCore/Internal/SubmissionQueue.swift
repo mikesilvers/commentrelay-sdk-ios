@@ -60,8 +60,12 @@ actor SubmissionQueue {
     }
 
     /// Persists entry.json + one sidecar per attachment. Validates size/MIME/per-field caps first.
+    /// `serverSubmissionId` and `startingPhase` allow the caller to pre-populate the entry
+    /// when a POST already succeeded (so flush can resume via finalize-first without re-POSTing).
     func enqueue(_ submission: CommentRelaySubmission,
-                 attachments: [CommentRelayQueuedAttachment]) throws -> UUID {
+                 attachments: [CommentRelayQueuedAttachment],
+                 serverSubmissionId: UUID? = nil,
+                 startingPhase: QueuedSubmission.Phase = .needsSubmit) throws -> UUID {
         // --- Cap validation: size, MIME type, per-field count ---
         try validate(attachments)
 
@@ -83,8 +87,8 @@ actor SubmissionQueue {
         }
         let entry = QueuedSubmission(
             localId: id, submission: submission,
-            phase: .needsSubmit,
-            serverSubmissionId: nil, attachments: refs,
+            phase: startingPhase,
+            serverSubmissionId: serverSubmissionId, attachments: refs,
             attemptCount: 0, nextEarliestAttempt: nil, createdAt: Date(), lastError: nil)
         try persist(entry)
         evictIfNeeded()
