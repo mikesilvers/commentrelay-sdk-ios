@@ -118,9 +118,23 @@ actor SubmissionQueue {
         try? fm.removeItem(at: entryDir(localId))
     }
 
+    /// Marks an entry terminally failed (CRLBS-121): retained for History.
+    /// Flush skips entries with `failedAt` set — enforced in CommentRelayClient.flushQueue (Task 4).
+    func markFailed(localId: UUID, category: String, detail: String) {
+        guard var e = loadAll().first(where: { $0.localId == localId }) else { return }
+        let now = Date()
+        e.failedAt = now
+        e.lastAttemptAt = now
+        e.errorCategory = category
+        e.lastError = detail
+        try? persist(e)
+    }
+
     func readSidecar(localId: UUID, fileName: String) -> Data? {
         try? Data(contentsOf: entryDir(localId).appendingPathComponent(fileName))
     }
 
     var count: Int { loadAll().count }
+    /// Entries still eligible for automatic retry (not terminally failed).
+    var retryingCount: Int { loadAll().filter { $0.failedAt == nil }.count }
 }
