@@ -7,8 +7,8 @@ final class DraftAPITests: XCTestCase {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("crl-draft-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let config = CommentRelayConfiguration(
-            baseURL: URL(string: "http://localhost:3000")!,
             apiKey: "crk_test_abc",
+            baseURL: URL(string: "http://localhost:3000")!,
             userIdentifier: "test-user")
         return CommentRelayClient(configuration: config, session: .shared, cacheDirectory: dir, keychainService: "crl.test.\(UUID().uuidString)")
     }

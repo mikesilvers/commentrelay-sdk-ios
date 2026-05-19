@@ -4,8 +4,8 @@ import XCTest
 final class CommentRelayConfigurationTests: XCTestCase {
     func test_defaults_autoPopulateMetadata() {
         let c = CommentRelayConfiguration(
-            baseURL: URL(string: "https://api.example.com")!,
-            apiKey: "crk_test_abc")
+            apiKey: "crk_test_abc",
+            baseURL: URL(string: "https://api.example.com")!)
         XCTAssertFalse(c.effectiveSDKVersion.isEmpty)
         XCTAssertFalse(c.effectiveOSVersion.isEmpty)
         XCTAssertFalse(c.effectiveDeviceModel.isEmpty)
@@ -14,8 +14,8 @@ final class CommentRelayConfigurationTests: XCTestCase {
 
     func test_overrides_winOverAutoPopulated() {
         let c = CommentRelayConfiguration(
-            baseURL: URL(string: "https://api.example.com")!,
             apiKey: "k",
+            baseURL: URL(string: "https://api.example.com")!,
             sdkVersionOverride: "9.9.9",
             osVersionOverride: "42.0",
             deviceModelOverride: "MyFakePhone",

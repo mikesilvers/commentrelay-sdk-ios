@@ -44,24 +44,27 @@ it with your app.
 ## 2. Configure
 
 Everything starts with a `CommentRelayConfiguration` (from `CommentRelayCore`).
-Minimum: your API base URL and project API key.
+Only your project API key is required — the SDK talks to production by default.
 
 ```swift
 import CommentRelayCore
 
+// Talks to production (https://api.commentrelay.com) by default:
 let config = CommentRelayConfiguration(
-    baseURL: URL(string: "https://your-commentrelay-api.example.com")!,
     apiKey: "crk_live_yourprojectkey",
     userIdentifier: currentUser?.id          // optional; enables history & per-user limits
 )
+
+// Self-hosted / staging? Pass an explicit baseURL:
+// CommentRelayConfiguration(apiKey: "…", baseURL: URL(string: "https://your-api.example.com")!)
 ```
 
 Full options (all after `apiKey` have defaults):
 
 | Parameter | Default | Purpose |
 |---|---|---|
-| `baseURL` | — | CommentRelay API root the SDK talks to. |
 | `apiKey` | — | Project API key (`crk_…`). |
+| `baseURL` | `https://api.commentrelay.com` (production) | CommentRelay API root the SDK talks to. |
 | `userIdentifier` | `nil` | App‑assigned stable user id. Enables submission history and per‑user response limits. Omit for anonymous. |
 | `locale` | `nil` | BCP‑47 locale override sent with submissions. |
 | `sdkVersionOverride` / `osVersionOverride` / `deviceModelOverride` / `appVersionOverride` | `nil` | Override the auto‑detected diagnostic context. |

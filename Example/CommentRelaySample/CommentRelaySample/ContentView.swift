@@ -74,8 +74,8 @@ struct ContentView: View {
     private func makeConfig() -> CommentRelayConfiguration {
         let url = URL(string: baseURLString) ?? URL(string: "http://localhost:3000")!
         return CommentRelayConfiguration(
-            baseURL: url,
             apiKey: apiKeyString,
+            baseURL: url,
             userIdentifier: userIdentifier.isEmpty ? nil : userIdentifier
         )
     }
