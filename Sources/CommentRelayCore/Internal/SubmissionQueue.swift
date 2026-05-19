@@ -93,7 +93,8 @@ actor SubmissionQueue {
             localId: id, submission: submission,
             phase: startingPhase,
             serverSubmissionId: serverSubmissionId, attachments: refs,
-            attemptCount: 0, nextEarliestAttempt: nil, createdAt: Date(), lastError: nil)
+            attemptCount: 0, nextEarliestAttempt: nil, createdAt: Date(),
+            lastError: nil, failedAt: nil, lastAttemptAt: nil, errorCategory: nil)
         try persist(entry)
         evictIfNeeded()
         return id

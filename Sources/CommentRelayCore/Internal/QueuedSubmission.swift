@@ -23,4 +23,12 @@ struct QueuedSubmission: Codable, Sendable, Equatable {
     var nextEarliestAttempt: Date?
     let createdAt: Date
     var lastError: String?
+    /// Set when the entry hits a terminal failure (CRLBS-121). Non-nil ⇒ not retried automatically.
+    var failedAt: Date?
+    /// Timestamp of the most recent attempt that ended in error; nil until the first failure.
+    var lastAttemptAt: Date?
+    /// Raw value of `CommentRelaySubmissionProblem.Category` (introduced in a later task);
+    /// typed `String?` to avoid a cross-task compile dependency — validated against the
+    /// enum at write time. UI maps it to a localized friendly message.
+    var errorCategory: String?
 }
