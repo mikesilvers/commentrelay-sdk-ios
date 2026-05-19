@@ -41,3 +41,11 @@
 "crl.photo.add" = "Add photo";
 "crl.photo.remove" = "Remove";
 "crl.attachment.add" = "Add attachment";
+"crl.problem.queued_chip" = "Queued — will retry";
+"crl.problem.failed_chip" = "Failed to send";
+"crl.problem.try_again" = "Try again";
+"crl.problem.remove" = "Remove";
+"crl.problem.remove_confirm_title" = "Remove this feedback?";
+"crl.problem.remove_confirm" = "Remove";
+"crl.problem.history_unavailable" = "Couldn't load past feedback. Showing items on this device.";
+"crl.problem.attempts_format" = "Attempt %lld";
