@@ -1,7 +1,8 @@
 # Submission problem visibility in History (queued & failed, with retry/remove)
 
 **Date:** 2026-05-19
-**Status:** Design — awaiting user review before implementation plan.
+**Ticket:** CRLBS-121
+**Status:** Approved — proceeding to implementation plan.
 
 ## Problem
 
@@ -178,9 +179,7 @@ delete only after confirmation; server-fetch-fails path still shows problems
   additive and should land **after** PR #17 to avoid conflicting edits in
   `CommentRelayView.swift` / Strings; the implementation plan will pin the
   base accordingly.
-- New JIRA ticket to be filed at the implementation-plan transition (this is
-  a feature distinct from the CRLBS-119 bug); branch will be renamed to
-  `feature/CRLBS-<NN>-…` per repo convention at that point.
+- Tracked as CRLBS-121; branch `feature/CRLBS-121-history-problem-visibility`.
 
 ## Open questions
 
