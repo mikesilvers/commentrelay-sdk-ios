@@ -4,6 +4,9 @@ import UIKit
 #endif
 
 public struct CommentRelayConfiguration: Sendable {
+    /// The production CommentRelay API base URL. Used as the default for `baseURL`.
+    public static let productionBaseURL = URL(string: "https://api.commentrelay.com")!
+
     public let baseURL: URL
     public let apiKey: String
     public let userIdentifier: String?
@@ -18,8 +21,15 @@ public struct CommentRelayConfiguration: Sendable {
     public let maxQueuedSubmissions: Int
     public let maxQueueAge: TimeInterval
 
-    public init(baseURL: URL,
-                apiKey: String,
+    /// Creates a configuration for the CommentRelay SDK.
+    ///
+    /// - Parameters:
+    ///   - apiKey: Your project API key (`crk_…`). Required.
+    ///   - baseURL: The CommentRelay API root. Defaults to production
+    ///     (`https://api.commentrelay.com`); pass an explicit URL for self-hosted
+    ///     or staging environments.
+    public init(apiKey: String,
+                baseURL: URL = CommentRelayConfiguration.productionBaseURL,
                 userIdentifier: String? = nil,
                 locale: String? = nil,
                 sdkVersionOverride: String? = nil,
@@ -29,8 +39,8 @@ public struct CommentRelayConfiguration: Sendable {
                 offlineQueueingEnabled: Bool = true,
                 maxQueuedSubmissions: Int = 50,
                 maxQueueAge: TimeInterval = 30 * 24 * 60 * 60) {
-        self.baseURL = baseURL
         self.apiKey = apiKey
+        self.baseURL = baseURL
         self.userIdentifier = userIdentifier
         self.locale = locale
         self.sdkVersionOverride = sdkVersionOverride

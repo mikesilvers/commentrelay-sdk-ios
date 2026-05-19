@@ -107,8 +107,8 @@ final class FlushTriggerTests: XCTestCase {
         let session = URLProtocolStub.makeSession()
         let c = CommentRelayClient(
             configuration: CommentRelayConfiguration(
-                baseURL: URL(string: "https://example.test")!,
-                apiKey: "k", userIdentifier: "u"),
+                apiKey: "k", baseURL: URL(string: "https://example.test")!,
+                userIdentifier: "u"),
             session: session,
             cacheDirectory: dir,
             keychainService: "svc-test-\(UUID())",
@@ -160,7 +160,7 @@ final class FlushTriggerTests: XCTestCase {
         let dir = tmp()
         let fake = FakeReachability(initial: false)
         let c = CommentRelayClient(configuration: CommentRelayConfiguration(
-            baseURL: URL(string: "https://example.test")!, apiKey: "k", userIdentifier: "u"),
+            apiKey: "k", baseURL: URL(string: "https://example.test")!, userIdentifier: "u"),
             session: session, cacheDirectory: dir, keychainService: "svc-\(UUID())",
             reachability: fake)
         _ = try await c.submit(sub(), attachments: [])

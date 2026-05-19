@@ -21,7 +21,7 @@ final class CircuitBreakerTests: XCTestCase {
         }
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("crl-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let config = CommentRelayConfiguration(baseURL: URL(string: "http://x")!, apiKey: "k", userIdentifier: "u")
+        let config = CommentRelayConfiguration(apiKey: "k", baseURL: URL(string: "http://x")!, userIdentifier: "u")
         let client = CommentRelayClient(configuration: config, session: session, cacheDirectory: dir, keychainService: "crl.test.\(UUID().uuidString)")
 
         let submission = CommentRelaySubmission(formId: "c", userIdentifier: "u", platform: .ios, fields: [])

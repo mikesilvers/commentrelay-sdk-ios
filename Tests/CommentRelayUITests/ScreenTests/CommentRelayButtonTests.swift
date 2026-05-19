@@ -8,7 +8,7 @@ import CommentRelayCore
 @MainActor
 final class CommentRelayButtonTests: XCTestCase {
     func test_rendersLabelClosure() throws {
-        let config = CommentRelayConfiguration(baseURL: URL(string: "http://x")!, apiKey: "k")
+        let config = CommentRelayConfiguration(apiKey: "k", baseURL: URL(string: "http://x")!)
         let sut = CommentRelayButton(configuration: config) {
             Text("Send feedback")
         }

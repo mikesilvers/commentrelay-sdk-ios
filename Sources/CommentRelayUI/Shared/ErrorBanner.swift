@@ -1,6 +1,9 @@
 import SwiftUI
 
-public struct ErrorBanner: View, @unchecked Sendable {
+// A SwiftUI View (main-actor); it is never sent across actors, so it neither
+// needs nor should assert `Sendable`. The previous `@unchecked Sendable` only
+// silenced the non-Sendable `retry` closure — removed.
+public struct ErrorBanner: View {
     public let message: String
     public let retry: (() -> Void)?
 

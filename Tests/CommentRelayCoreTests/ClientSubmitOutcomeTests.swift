@@ -18,8 +18,9 @@ final class ClientSubmitOutcomeTests: XCTestCase {
         try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true); return u
     }
     private func client(_ session: URLSession, _ dir: URL, queueing: Bool = true) -> CommentRelayClient {
-        let cfg = CommentRelayConfiguration(baseURL: URL(string: "https://example.test")!,
-                                            apiKey: "k", userIdentifier: "u",
+        let cfg = CommentRelayConfiguration(apiKey: "k",
+                                            baseURL: URL(string: "https://example.test")!,
+                                            userIdentifier: "u",
                                             offlineQueueingEnabled: queueing)
         return CommentRelayClient(configuration: cfg, session: session,
                                   cacheDirectory: dir, keychainService: "svc-\(UUID())")
