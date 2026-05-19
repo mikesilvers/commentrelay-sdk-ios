@@ -12,6 +12,7 @@ public struct CommentRelayView: View {
     @State private var pendingCount = 0
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dismiss) private var dismiss
 
     @MainActor
     public init(configuration: CommentRelayConfiguration, formId: String? = nil, formTitle: String? = nil) {
@@ -34,6 +35,9 @@ public struct CommentRelayView: View {
         NavigationStack {
             content
                 .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(Strings.sheetCancel) { dismiss() }
+                    }
                     ToolbarItem(placement: toolbarPlacement) {
                         Button {
                             route = .history
@@ -97,7 +101,7 @@ public struct CommentRelayView: View {
         case .thanks(let showHistory):
             ThankYouView(
                 showHistoryAction: showHistory ? { route = .history } : nil,
-                doneAction: { Task { @MainActor in await reload() } }
+                doneAction: { dismiss() }
             )
         case .history:
             HistoryLoader(client: client)
