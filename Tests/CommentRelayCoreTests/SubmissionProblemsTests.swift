@@ -36,3 +36,26 @@ final class SubmissionProblemsTests: XCTestCase {
         XCTAssertEqual(n, 0)
     }
 }
+
+extension SubmissionProblemsTests {
+    func test_category_maps_from_commentRelayError() {
+        XCTAssertEqual(CommentRelaySubmissionProblem.Category(.server(message: "x")), .server)
+        XCTAssertEqual(CommentRelaySubmissionProblem.Category(.forbidden(message: "x")), .forbidden)
+        XCTAssertEqual(CommentRelaySubmissionProblem.Category(.rateLimited(retryAfter: nil)), .rateLimited)
+        XCTAssertEqual(CommentRelaySubmissionProblem.Category(.badRequest(message: "x")), .badRequest)
+    }
+
+    func test_category_token_roundtrips_and_defaults_to_unknown() {
+        let all: [CommentRelaySubmissionProblem.Category] = [
+            .server, .transport, .rateLimited, .forbidden, .badRequest,
+            .paymentRequired, .notFound, .decoding, .conflict,
+            .uploadFailed, .uploadUrlExpired, .unknown
+        ]
+        for c in all {
+            XCTAssertEqual(CommentRelaySubmissionProblem.Category(token: c.rawValue), c,
+                           "round-trip failed for \(c)")
+        }
+        XCTAssertEqual(CommentRelaySubmissionProblem.Category(token: nil), .unknown)
+        XCTAssertEqual(CommentRelaySubmissionProblem.Category(token: "garbage"), .unknown)
+    }
+}
