@@ -191,7 +191,19 @@ public actor CommentRelayClient {
             return .submitted(receipt)
         } catch let err as CommentRelayError {
             switch RetryPolicy.classify(err) {
-            case .terminal, .pause:
+            case .terminal:
+                throw err
+            case .pause:
+                // 403 after a successful POST: still surface the error (circuit-breaker already
+                // engaged), but persist a recoverable entry so reset()+flush finalizes the
+                // existing server record via finalize-first instead of orphaning it (CRLBS-116).
+                if configuration.offlineQueueingEnabled {
+                    _ = try await submissionQueue.enqueue(
+                        submission, attachments: attachments,
+                        serverSubmissionId: receipt.submissionId,
+                        startingPhase: receipt.hasUploads ? .needsUpload : .needsFinalize)
+                    await broadcastPendingCount()
+                }
                 throw err
             case .retry:
                 guard configuration.offlineQueueingEnabled else { throw err }
