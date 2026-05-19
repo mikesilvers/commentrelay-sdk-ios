@@ -70,3 +70,7 @@ Determinism: no bare-sleep gating; bounded waits / explicit signals consistent w
 - The attachment `.needsUpload` re-POST-for-fresh-presigned-URLs duplicate window (pre-existing, spec-documented limitation; CRLBS-114).
 - Pure `.terminal`-after-POST orphan (non-recoverable; server TTL).
 - Any change to `RetryPolicy`, `advance`, `SubmissionQueue`, or the circuit-breaker/trigger machinery.
+
+## Addendum (implementation)
+
+Reaching the post-POST `.pause` branch for the attachment/upload path required reclassifying upload-path HTTP 403 as `.forbidden`. Two minimal additional changes were made beyond `submit`'s post-POST catch: `UploadTransport.put` maps HTTP 403 → `.forbidden` (was `.server`); `BackgroundUploadManager.enqueue` rethrows `CommentRelayError` unwrapped (was wrapped in `.uploadFailed`). Only status 403 is reclassified; all other statuses, `URLError → .transport`, the non-`CommentRelayError` `.uploadFailed` wrapping, and `.uploadUrlExpired`/resubmit/expiry behavior are unchanged. The circuit-breaker itself is unmodified — it is engaged via the existing callee `disable()` on `.forbidden` in `finalize`/`uploadFiles`. (This supersedes the "only `submit`'s catch changes" / "circuit-breaker & transport unchanged" statements above, which were written before this dependency was discovered.)
