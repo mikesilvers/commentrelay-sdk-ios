@@ -153,10 +153,20 @@ let draft = await client.loadDraft(formId: form.id)
 await client.deleteDraft(formId: form.id)
 ```
 
-Other surface: `pendingSubmissionCount` / `pendingSubmissionCountStream()`
-(observe the offline queue depth — `CommentRelayUI` shows a pending badge),
-`flushQueue()` (manually trigger delivery), `resubmit(_:)`, `finalize(_:)`,
-`uploadFiles(receipt:payloads:)` (used internally by `submit`), and `reset()`.
+Observe the offline queue depth (`CommentRelayUI` shows a pending badge for
+this). `CommentRelayClient` is an `actor`, so the stream accessor is `await`ed
+at the call site:
+
+```swift
+let count = await client.pendingSubmissionCount          // one-shot
+for await depth in await client.pendingSubmissionCountStream() {
+    updateBadge(depth)                                    // live updates
+}
+```
+
+Other surface: `flushQueue()` (manually trigger delivery), `resubmit(_:)`,
+`finalize(_:)`, `uploadFiles(receipt:payloads:)` (used internally by `submit`),
+and `reset()`.
 
 ### Error handling
 
