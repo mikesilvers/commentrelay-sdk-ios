@@ -25,6 +25,10 @@ actor BackgroundUploadManager {
                 do {
                     try await transport.put(data: payload.data, to: payload.target.uploadUrl, contentType: payload.contentType)
                     inFlight[subId]?.remove(payload.target.fileName)
+                } catch let crErr as CommentRelayError {
+                    // Pass CommentRelayErrors (e.g. .forbidden) through unwrapped so callers
+                    // can classify them correctly (CRLBS-116).
+                    throw crErr
                 } catch {
                     throw CommentRelayError.uploadFailed(submissionId: subId,
                                                          fileName: payload.target.fileName,

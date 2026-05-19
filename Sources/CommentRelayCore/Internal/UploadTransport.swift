@@ -16,8 +16,14 @@ struct URLSessionUploadTransport: UploadTransport {
         do {
             let (_, response) = try await session.upload(for: request, from: data)
             guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+                if code == 403 {
+                    throw CommentRelayError.forbidden(message: "upload returned 403")
+                }
                 throw CommentRelayError.server(message: "upload failed")
             }
+        } catch let crErr as CommentRelayError {
+            throw crErr
         } catch let urlError as URLError {
             throw CommentRelayError.transport(urlError)
         }

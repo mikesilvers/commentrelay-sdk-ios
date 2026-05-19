@@ -348,4 +348,145 @@ final class SubmissionQueueFlushTests: XCTestCase {
         let finalCount = await c.pendingSubmissionCount
         XCTAssertEqual(finalCount, 1, "one entry remains after pause (terminal entry was deleted)")
     }
+
+    // MARK: - CRLBS-116: Post-POST .pause enqueues for resume, still throws
+
+    func testPostSuccessThenForbiddenFinalizeQueuesForFinalizeAndThrows() async throws {
+        let session = URLProtocolStub.makeSession()
+        let dir = tmp()
+        let c = client(session, dir)
+        actor PostCounter { var n = 0; func increment() { n += 1 } }
+        let postCounter = PostCounter()
+        let fixedServerId = UUID()
+        let fixedServerIdStr = fixedServerId.uuidString.lowercased()
+
+        URLProtocolStub.asyncResponder = { req in
+            if req.url!.path.hasSuffix("/sdk/v1/submissions") && req.httpMethod == "POST" {
+                await postCounter.increment()
+                return (Data("{\"submissionId\":\"\(fixedServerIdStr)\",\"hasUploads\":false,\"uploadUrls\":[]}".utf8), 200)
+            }
+            if req.url!.path.contains("/finalize") {
+                return (Data("{\"message\":\"forbidden\"}".utf8), 403)
+            }
+            return (Data("{}".utf8), 200)
+        }
+
+        do {
+            _ = try await c.submit(sub(), attachments: [])
+            XCTFail("submit must throw .forbidden after a 403 post-POST")
+        } catch let e as CommentRelayError {
+            guard case .forbidden = e else { return XCTFail("expected .forbidden, got \(e)") }
+        } catch { return XCTFail("wrong error type: \(error)") }
+
+        let queueDir = dir.appendingPathComponent("queue")
+        let queueContents = try FileManager.default.contentsOfDirectory(at: queueDir, includingPropertiesForKeys: nil)
+        XCTAssertEqual(queueContents.count, 1, "403 after a successful POST must leave a recoverable queued entry")
+        let entryURL = try XCTUnwrap(queueContents.first).appendingPathComponent("entry.json")
+        let entry = try JSONDecoder().decode(QueuedSubmission.self, from: Data(contentsOf: entryURL))
+        XCTAssertEqual(entry.serverSubmissionId, fixedServerId)
+        XCTAssertEqual(entry.phase, .needsFinalize)
+
+        URLProtocolStub.asyncResponder = { req in
+            if req.url!.path.hasSuffix("/sdk/v1/submissions") && req.httpMethod == "POST" {
+                await postCounter.increment()
+                return (Data("{\"submissionId\":\"\(fixedServerIdStr)\",\"hasUploads\":false,\"uploadUrls\":[]}".utf8), 200)
+            }
+            if req.url!.path.contains("/finalize") {
+                return (Data("{\"submissionId\":\"\(fixedServerIdStr)\",\"status\":\"complete\"}".utf8), 200)
+            }
+            return (Data("{}".utf8), 200)
+        }
+        await c.reset()
+        await c.flushQueue()
+
+        let pending = await c.pendingSubmissionCount
+        XCTAssertEqual(pending, 0, "queue must drain after reset()+flush finalizes the existing record")
+        let posts = await postCounter.n
+        XCTAssertEqual(posts, 1, "POST must be hit EXACTLY ONCE — finalize-first, no duplicate; got \(posts)")
+    }
+
+    func testPostSuccessThenForbiddenUploadQueuesAtNeedsUpload() async throws {
+        let session = URLProtocolStub.makeSession()
+        let dir = tmp()
+        let c = client(session, dir)
+        let fixedServerId = UUID()
+        let fixedServerIdStr = fixedServerId.uuidString.lowercased()
+
+        URLProtocolStub.asyncResponder = { req in
+            if req.url!.path.hasSuffix("/sdk/v1/submissions") && req.httpMethod == "POST" {
+                let body = "{\"submissionId\":\"\(fixedServerIdStr)\",\"hasUploads\":true,\"uploadUrls\":[{\"fieldId\":\"photo\",\"fileName\":\"a.png\",\"uploadUrl\":\"https://example.test/upload/a\"}]}"
+                return (Data(body.utf8), 200)
+            }
+            return (Data("{\"message\":\"forbidden\"}".utf8), 403)
+        }
+
+        let att = CommentRelayQueuedAttachment(fieldId: "photo", fileName: "a.png",
+                                               contentType: "image/png", data: Data([1, 2, 3]))
+        do {
+            _ = try await c.submit(sub(), attachments: [att])
+            XCTFail("submit must throw .forbidden after a 403 during upload")
+        } catch let e as CommentRelayError {
+            guard case .forbidden = e else { return XCTFail("expected .forbidden, got \(e)") }
+        } catch { return XCTFail("wrong error type: \(error)") }
+
+        let queueDir = dir.appendingPathComponent("queue")
+        let queueContents = try FileManager.default.contentsOfDirectory(at: queueDir, includingPropertiesForKeys: nil)
+        XCTAssertEqual(queueContents.count, 1)
+        let entryURL = try XCTUnwrap(queueContents.first).appendingPathComponent("entry.json")
+        let entry = try JSONDecoder().decode(QueuedSubmission.self, from: Data(contentsOf: entryURL))
+        XCTAssertEqual(entry.serverSubmissionId, fixedServerId)
+        XCTAssertEqual(entry.phase, .needsUpload)
+    }
+
+    func testPostSuccessThenForbiddenWithQueueingDisabledThrowsAndDoesNotQueue() async throws {
+        let session = URLProtocolStub.makeSession()
+        let dir = tmp()
+        let cfg = CommentRelayConfiguration(baseURL: URL(string: "https://example.test")!,
+                                            apiKey: "k", userIdentifier: "u",
+                                            offlineQueueingEnabled: false)
+        let c = CommentRelayClient(configuration: cfg, session: session,
+                                   cacheDirectory: dir, keychainService: "svc-\(UUID())")
+        let fixedServerIdStr = UUID().uuidString.lowercased()
+        URLProtocolStub.asyncResponder = { req in
+            if req.url!.path.hasSuffix("/sdk/v1/submissions") && req.httpMethod == "POST" {
+                return (Data("{\"submissionId\":\"\(fixedServerIdStr)\",\"hasUploads\":false,\"uploadUrls\":[]}".utf8), 200)
+            }
+            if req.url!.path.contains("/finalize") {
+                return (Data("{\"message\":\"forbidden\"}".utf8), 403)
+            }
+            return (Data("{}".utf8), 200)
+        }
+        do {
+            _ = try await c.submit(sub(), attachments: [])
+            XCTFail("must throw when queueing disabled")
+        } catch let e as CommentRelayError {
+            guard case .forbidden = e else { return XCTFail("expected .forbidden, got \(e)") }
+        } catch { return XCTFail("wrong error type: \(error)") }
+        let queueDir = dir.appendingPathComponent("queue")
+        let exists = FileManager.default.fileExists(atPath: queueDir.path)
+        let count = exists ? (try FileManager.default.contentsOfDirectory(at: queueDir, includingPropertiesForKeys: nil)).count : 0
+        XCTAssertEqual(count, 0, "queueing disabled → no entry persisted (unchanged behavior)")
+    }
+
+    func testPrePostForbiddenThrowsAndDoesNotQueue() async throws {
+        let session = URLProtocolStub.makeSession()
+        let dir = tmp()
+        let c = client(session, dir)
+        URLProtocolStub.asyncResponder = { req in
+            if req.url!.path.hasSuffix("/sdk/v1/submissions") && req.httpMethod == "POST" {
+                return (Data("{\"message\":\"forbidden\"}".utf8), 403)
+            }
+            return (Data("{}".utf8), 200)
+        }
+        do {
+            _ = try await c.submit(sub(), attachments: [])
+            XCTFail("must throw .forbidden")
+        } catch let e as CommentRelayError {
+            guard case .forbidden = e else { return XCTFail("expected .forbidden, got \(e)") }
+        } catch { return XCTFail("wrong error type: \(error)") }
+        let queueDir = dir.appendingPathComponent("queue")
+        let exists = FileManager.default.fileExists(atPath: queueDir.path)
+        let count = exists ? (try FileManager.default.contentsOfDirectory(at: queueDir, includingPropertiesForKeys: nil)).count : 0
+        XCTAssertEqual(count, 0, "pre-POST 403 must not enqueue (no server record yet) — unchanged")
+    }
 }
