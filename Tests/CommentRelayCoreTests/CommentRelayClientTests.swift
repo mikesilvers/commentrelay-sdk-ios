@@ -82,8 +82,8 @@ final class CommentRelayClientTests: XCTestCase {
         let dir = cacheDir ?? FileManager.default.temporaryDirectory.appendingPathComponent("crl-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         let config = CommentRelayConfiguration(
-            baseURL: URL(string: "http://localhost:3000")!,
             apiKey: "crk_test_abc",
+            baseURL: URL(string: "http://localhost:3000")!,
             userIdentifier: "test-user")
         return CommentRelayClient(
             configuration: config,

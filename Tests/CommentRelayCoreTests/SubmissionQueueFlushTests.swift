@@ -27,7 +27,7 @@ final class SubmissionQueueFlushTests: XCTestCase {
     }
     private func client(_ s: URLSession, _ d: URL) -> CommentRelayClient {
         CommentRelayClient(configuration: CommentRelayConfiguration(
-            baseURL: URL(string: "https://example.test")!, apiKey: "k", userIdentifier: "u"),
+            apiKey: "k", baseURL: URL(string: "https://example.test")!, userIdentifier: "u"),
             session: s, cacheDirectory: d, keychainService: "svc-\(UUID())")
     }
 
@@ -441,8 +441,9 @@ final class SubmissionQueueFlushTests: XCTestCase {
     func testPostSuccessThenForbiddenWithQueueingDisabledThrowsAndDoesNotQueue() async throws {
         let session = URLProtocolStub.makeSession()
         let dir = tmp()
-        let cfg = CommentRelayConfiguration(baseURL: URL(string: "https://example.test")!,
-                                            apiKey: "k", userIdentifier: "u",
+        let cfg = CommentRelayConfiguration(apiKey: "k",
+                                            baseURL: URL(string: "https://example.test")!,
+                                            userIdentifier: "u",
                                             offlineQueueingEnabled: false)
         let c = CommentRelayClient(configuration: cfg, session: session,
                                    cacheDirectory: dir, keychainService: "svc-\(UUID())")
