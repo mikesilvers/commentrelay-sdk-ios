@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var baseURLString = "http://localhost:3000"
     @State private var apiKeyString = "crk_test_sample"
     @State private var userIdentifier = ""
+    @State private var formIdentifier = ""
     @State private var isFeedbackPresented = false
     @State private var pingStatus: PingStatus = .idle
 
@@ -21,6 +22,7 @@ struct ContentView: View {
             group("Base URL", $baseURLString)
             group("API key", $apiKeyString)
             group("User identifier (optional)", $userIdentifier)
+            group("Form ID (optional — shows only that form)", $formIdentifier)
 
             Button(action: ping) {
                 HStack {
@@ -38,7 +40,8 @@ struct ContentView: View {
             .frame(maxWidth: .infinity)
             .commentRelaySheet(
                 isPresented: $isFeedbackPresented,
-                configuration: makeConfig()
+                configuration: makeConfig(),
+                formId: formIdentifier.isEmpty ? nil : formIdentifier
             )
 
             pingStatusView
