@@ -1,4 +1,5 @@
 "crl.sheet.title" = "Comentarios";
+"crl.sheet.cancel" = "Cancelar";
 "crl.picker.title" = "¿Qué quieres compartir?";
 "crl.picker.empty" = "Los comentarios no están disponibles en este momento.";
 "crl.form.submit" = "Enviar comentarios";

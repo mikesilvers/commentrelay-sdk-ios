@@ -15,6 +15,7 @@ enum Strings {
 
     // Convenience accessors — one per key to catch typos at compile time.
     static var sheetTitle: String { string("crl.sheet.title") }
+    static var sheetCancel: String { string("crl.sheet.cancel") }
     static var pickerTitle: String { string("crl.picker.title") }
     static var pickerEmpty: String { string("crl.picker.empty") }
     static var formSubmit: String { string("crl.form.submit") }
