@@ -32,6 +32,8 @@ enum Strings {
     static var thanksBody: String { string("crl.thanks.body") }
     static var thanksViewHistory: String { string("crl.thanks.view_history") }
     static var thanksDone: String { string("crl.thanks.done") }
+    static var queuedTitle: String { string("crl.queued.title") }
+    static var queuedBody: String { string("crl.queued.body") }
     static var historyTitle: String { string("crl.history.title") }
     static var historyEmptyIdentified: String { string("crl.history.empty_identified") }
     static var historyEmptyAnonymous: String { string("crl.history.empty_anonymous") }

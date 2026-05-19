@@ -18,6 +18,8 @@
 "crl.thanks.body" = "Tus comentarios han sido enviados.";
 "crl.thanks.view_history" = "Ver comentarios anteriores";
 "crl.thanks.done" = "Listo";
+"crl.queued.title" = "Guardado";
+"crl.queued.body" = "Tus comentarios se guardaron y se enviarán automáticamente cuando haya conexión.";
 "crl.history.title" = "Comentarios anteriores";
 "crl.history.empty_identified" = "Aún no has enviado comentarios.";
 "crl.history.empty_anonymous" = "Inicia sesión para ver tu historial de comentarios.";
