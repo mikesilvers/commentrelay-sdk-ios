@@ -27,7 +27,11 @@ actor BackgroundUploadManager {
                     inFlight[subId]?.remove(payload.target.fileName)
                 } catch let crErr as CommentRelayError {
                     // Pass CommentRelayErrors (e.g. .forbidden) through unwrapped so callers
-                    // can classify them correctly (CRLBS-116).
+                    // can classify them correctly (CRLBS-116). Tradeoff: this bypasses the
+                    // `.uploadFailed` envelope, so its submissionId/fileName diagnostic context
+                    // is not attached. Acceptable while `.forbidden` is the only CommentRelayError
+                    // `transport.put` throws (caller has the receipt + a message); revisit if the
+                    // transport starts surfacing other CommentRelayError cases here.
                     throw crErr
                 } catch {
                     throw CommentRelayError.uploadFailed(submissionId: subId,
