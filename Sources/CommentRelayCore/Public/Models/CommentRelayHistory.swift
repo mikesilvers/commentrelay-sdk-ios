@@ -35,6 +35,11 @@ public struct CommentRelayHistory: Codable, Sendable, Equatable {
         case submissions
     }
 
+    public init(isAnonymous: Bool, submissions: [CommentRelayHistoryEntry]) {
+        self.isAnonymous = isAnonymous
+        self.submissions = submissions
+    }
+
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.isAnonymous = try c.decodeIfPresent(Bool.self, forKey: .anonymousUser) ?? false
