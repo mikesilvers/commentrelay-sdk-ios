@@ -14,6 +14,10 @@ public struct CommentRelayConfiguration: Sendable {
     public let deviceModelOverride: String?
     public let appVersionOverride: String?
 
+    public let offlineQueueingEnabled: Bool
+    public let maxQueuedSubmissions: Int
+    public let maxQueueAge: TimeInterval
+
     public init(baseURL: URL,
                 apiKey: String,
                 userIdentifier: String? = nil,
@@ -21,7 +25,10 @@ public struct CommentRelayConfiguration: Sendable {
                 sdkVersionOverride: String? = nil,
                 osVersionOverride: String? = nil,
                 deviceModelOverride: String? = nil,
-                appVersionOverride: String? = nil) {
+                appVersionOverride: String? = nil,
+                offlineQueueingEnabled: Bool = true,
+                maxQueuedSubmissions: Int = 50,
+                maxQueueAge: TimeInterval = 30 * 24 * 60 * 60) {
         self.baseURL = baseURL
         self.apiKey = apiKey
         self.userIdentifier = userIdentifier
@@ -30,6 +37,9 @@ public struct CommentRelayConfiguration: Sendable {
         self.osVersionOverride = osVersionOverride
         self.deviceModelOverride = deviceModelOverride
         self.appVersionOverride = appVersionOverride
+        self.offlineQueueingEnabled = offlineQueueingEnabled
+        self.maxQueuedSubmissions = maxQueuedSubmissions
+        self.maxQueueAge = maxQueueAge
     }
 
     public var effectiveSDKVersion: String {

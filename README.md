@@ -51,3 +51,9 @@ swift test
 Both library targets ship an Apple privacy manifest (`PrivacyInfo.xcprivacy`) as an SPM resource. The SDK does **not** track users (`NSPrivacyTracking = false`, no tracking domains) and uses no required-reason APIs. Collected data (feedback content, photo/video attachments, optional contact details — email address and phone number, an app-assigned user identifier, and other diagnostic context such as OS/app version and locale, declared under the catch-all data type) is declared as linked to the user and used only for App Functionality. Xcode aggregates these manifests into your app's privacy report automatically.
 
 Source distribution via SPM requires no binary signature; XCFramework/binary signing and notarization are not applicable to this source package.
+
+## Offline submissions
+
+`submit(_:attachments:)` returns `SubmitOutcome`: `.submitted(receipt)` when delivered immediately, or `.queued(localId:)` when offline / on a transient failure (queueing is on by default — set `offlineQueueingEnabled: false` to opt out, in which case transient failures throw). Terminal errors (`400/402/403/404`/decoding) always throw and are never queued.
+
+Queued submissions persist to disk (max `maxQueuedSubmissions`, default 50; max `maxQueueAge`, default 30 days; FIFO eviction) and are delivered automatically on connectivity-restored, SDK init, app foreground, or any `submit()`/`flushQueue()` call. Delivery is finalize-first so a crash after the server accepted a submission does not create a duplicate; presigned upload URLs are never cached (a resumed upload re-requests fresh URLs). Observe `pendingSubmissionCount` / `pendingSubmissionCountStream()`; `CommentRelayUI` shows a pending badge. Feedback forms render offline from cached config via `effectiveConfig()`.

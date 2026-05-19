@@ -94,9 +94,12 @@ final class CommentRelayClientTests: XCTestCase {
 
     func test_submit_returnsReceipt_andPostsExpectedBody() async throws {
         MockURLProtocol.handler = { request in
+            let response = HTTPURLResponse(url: request.url!, statusCode: 201, httpVersion: "HTTP/1.1", headerFields: nil)!
+            if request.url?.path.hasSuffix("/finalize") == true {
+                return (response, Data(#"{"submissionId":"11111111-1111-1111-1111-111111111111","status":"complete"}"#.utf8))
+            }
             XCTAssertEqual(request.httpMethod, "POST")
             XCTAssertEqual(request.url?.path, "/sdk/v1/submissions")
-            let response = HTTPURLResponse(url: request.url!, statusCode: 201, httpVersion: "HTTP/1.1", headerFields: nil)!
             let body = #"""
             {"submissionId":"11111111-1111-1111-1111-111111111111",
              "hasUploads":false,
@@ -108,7 +111,10 @@ final class CommentRelayClientTests: XCTestCase {
         let submission = CommentRelaySubmission(
             formId: "form1", userIdentifier: "u", platform: .ios,
             fields: [.text(fieldId: "f1", value: "hello")])
-        let receipt = try await client.submit(submission)
+        let outcome = try await client.submit(submission)
+        guard case .submitted(let receipt) = outcome else {
+            return XCTFail("expected .submitted, got \(outcome)")
+        }
         XCTAssertEqual(receipt.submissionId.uuidString.lowercased(), "11111111-1111-1111-1111-111111111111")
         XCTAssertFalse(receipt.hasUploads)
     }

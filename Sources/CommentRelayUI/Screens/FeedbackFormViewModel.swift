@@ -99,6 +99,16 @@ public final class FeedbackFormViewModel {
         )
     }
 
+    /// All staged photo/attachment payloads as queueable attachments (for submit's offline queue).
+    public func queuedAttachments() -> [CommentRelayQueuedAttachment] {
+        photoValues.flatMap { fieldId, photos in
+            photos.map { photo in
+                CommentRelayQueuedAttachment(fieldId: fieldId, fileName: photo.name,
+                                             contentType: photo.mimeType, data: photo.data)
+            }
+        }
+    }
+
     /// Returns all photo/attachment payloads keyed by their field, for the client's uploadFiles call after submit.
     public func filePayloads(for receipt: CommentRelaySubmissionReceipt) -> [CommentRelayFilePayload] {
         var result: [CommentRelayFilePayload] = []

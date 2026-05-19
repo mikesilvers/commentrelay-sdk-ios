@@ -9,6 +9,9 @@ public struct CommentRelayView: View {
     @State private var route: Route = .loading
     @State private var client: CommentRelayClient
     @State private var activeViewModel: FeedbackFormViewModel? = nil
+    @State private var pendingCount = 0
+
+    @Environment(\.scenePhase) private var scenePhase
 
     @MainActor
     public init(configuration: CommentRelayConfiguration, formId: String? = nil, formTitle: String? = nil) {
@@ -36,13 +39,28 @@ public struct CommentRelayView: View {
                             route = .history
                         } label: {
                             Image(systemName: "clock.arrow.circlepath")
-                                .accessibilityLabel(Strings.historyTitle)
+                                .accessibilityHidden(true)
+                                .overlay(alignment: .topTrailing) {
+                                    PendingBadge(count: pendingCount)
+                                        .offset(x: 8, y: -8)
+                                        .accessibilityHidden(true)
+                                }
                         }
+                        .accessibilityLabel(pendingCount > 0
+                            ? "\(Strings.historyTitle), \(pendingCount) pending"
+                            : Strings.historyTitle)
                     }
                 }
                 .task {
                     await loadForms()
                 }
+        }
+        .task {
+            let stream = await client.pendingSubmissionCountStream()
+            for await n in stream { pendingCount = n }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await client.flushQueue() } }
         }
     }
 
@@ -128,15 +146,16 @@ public struct CommentRelayView: View {
     private func submitWithViewModel(_ submission: CommentRelaySubmission) async {
         guard let vm = activeViewModel else { return }
         route = .progress(currentFile: nil)
+        let attachments = vm.queuedAttachments()
         do {
-            let receipt = try await client.submit(submission)
-            let payloads = vm.filePayloads(for: receipt)
-            if receipt.hasUploads {
-                try await client.uploadFiles(receipt: receipt, payloads: payloads)
-            } else {
-                try await client.finalize(submissionId: receipt.submissionId)
+            let outcome = try await client.submit(submission, attachments: attachments)
+            switch outcome {
+            case .submitted:
+                route = .thanks(showHistory: configuration.userIdentifier != nil)
+            case .queued:
+                // Submission queued for retry when connectivity returns — treat as success for UX.
+                route = .thanks(showHistory: configuration.userIdentifier != nil)
             }
-            route = .thanks(showHistory: configuration.userIdentifier != nil)
         } catch let err as CommentRelayError {
             CommentRelayLoggerHolder.shared.log(level: .error, message: "submit failed", error: err)
             route = .progressFailed(message: message(for: err))
