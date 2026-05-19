@@ -64,6 +64,24 @@ public actor CommentRelayClient {
         for c in pendingCountContinuations.values { c.yield(n) }
     }
 
+    /// Persists a queue entry for a submission the server has *already accepted*
+    /// (POST succeeded; `receipt` in hand) so the flush state machine resumes via
+    /// finalize-first — no re-POST for the no-attachment path; attachments still
+    /// re-POST for fresh presigned URLs by design (CRLBS-114 documented limitation).
+    /// Then notifies pending-count observers. Returns the local id.
+    /// Shared by the post-POST `.pause` (throws) and `.retry` (returns `.queued`)
+    /// branches of `submit` so the two cannot drift.
+    private func enqueueForResume(_ submission: CommentRelaySubmission,
+                                  attachments: [CommentRelayQueuedAttachment],
+                                  receipt: CommentRelaySubmissionReceipt) async throws -> UUID {
+        let id = try await submissionQueue.enqueue(
+            submission, attachments: attachments,
+            serverSubmissionId: receipt.submissionId,
+            startingPhase: receipt.hasUploads ? .needsUpload : .needsFinalize)
+        await broadcastPendingCount()
+        return id
+    }
+
     // MARK: - Init
 
     public init(configuration: CommentRelayConfiguration, session: URLSession = .shared) {
@@ -194,26 +212,18 @@ public actor CommentRelayClient {
             case .terminal:
                 throw err
             case .pause:
-                // 403 after a successful POST: still surface the error (circuit-breaker already
-                // engaged), but persist a recoverable entry so reset()+flush finalizes the
-                // existing server record via finalize-first instead of orphaning it (CRLBS-116).
+                // 403 after a successful POST: still surface the error, but persist a
+                // recoverable entry so reset()+flush finalizes the existing server record
+                // via finalize-first instead of orphaning it (CRLBS-116). The circuit-breaker
+                // is already engaged here — finalize()/uploadFiles() call disable() on
+                // .forbidden before rethrowing — so no disable() is needed in this branch.
                 if configuration.offlineQueueingEnabled {
-                    _ = try await submissionQueue.enqueue(
-                        submission, attachments: attachments,
-                        serverSubmissionId: receipt.submissionId,
-                        startingPhase: receipt.hasUploads ? .needsUpload : .needsFinalize)
-                    await broadcastPendingCount()
+                    _ = try await enqueueForResume(submission, attachments: attachments, receipt: receipt)
                 }
                 throw err
             case .retry:
                 guard configuration.offlineQueueingEnabled else { throw err }
-                // Server already has the record — resume via finalize-first (no re-POST for the
-                // no-attachment path; attachments still re-POST for fresh presigned URLs by design).
-                let id = try await submissionQueue.enqueue(
-                    submission, attachments: attachments,
-                    serverSubmissionId: receipt.submissionId,
-                    startingPhase: receipt.hasUploads ? .needsUpload : .needsFinalize)
-                await broadcastPendingCount()
+                let id = try await enqueueForResume(submission, attachments: attachments, receipt: receipt)
                 return .queued(localId: id)
             }
         }
