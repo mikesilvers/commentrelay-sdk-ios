@@ -3,9 +3,10 @@ import CommentRelayCore
 
 public struct FormPickerView: View {
     public let forms: [CommentRelayForm]
-    public let onSelect: @Sendable (CommentRelayForm) -> Void
+    // Not @Sendable: main-actor SwiftUI action closure — mutates main-actor state.
+    public let onSelect: (CommentRelayForm) -> Void
 
-    public init(forms: [CommentRelayForm], onSelect: @escaping @Sendable (CommentRelayForm) -> Void) {
+    public init(forms: [CommentRelayForm], onSelect: @escaping (CommentRelayForm) -> Void) {
         self.forms = forms
         self.onSelect = onSelect
     }
@@ -41,7 +42,8 @@ public struct FormPickerView: View {
 
 private struct FormRow: View {
     let form: CommentRelayForm
-    let onTap: @Sendable () -> Void
+    // Not @Sendable: SwiftUI Button action — runs on the main actor.
+    let onTap: () -> Void
 
     var body: some View {
         Button(action: onTap) {

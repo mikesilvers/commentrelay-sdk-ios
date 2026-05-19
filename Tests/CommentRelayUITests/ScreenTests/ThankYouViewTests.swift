@@ -3,6 +3,7 @@ import SwiftUI
 import ViewInspector
 @testable import CommentRelayUI
 
+@MainActor
 final class ThankYouViewTests: XCTestCase {
     func test_historyButtonHidden_whenAnonymous() throws {
         let sut = ThankYouView(showHistoryAction: nil, doneAction: {})

@@ -1,10 +1,11 @@
 import SwiftUI
 
 public struct DraftRestorePrompt: View {
-    public let onResume: @Sendable () -> Void
-    public let onDiscard: @Sendable () -> Void
+    // Not @Sendable: main-actor SwiftUI action closures — mutate main-actor state.
+    public let onResume: () -> Void
+    public let onDiscard: () -> Void
 
-    public init(onResume: @escaping @Sendable () -> Void, onDiscard: @escaping @Sendable () -> Void) {
+    public init(onResume: @escaping () -> Void, onDiscard: @escaping () -> Void) {
         self.onResume = onResume
         self.onDiscard = onDiscard
     }

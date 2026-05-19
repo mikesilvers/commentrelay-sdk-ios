@@ -1,10 +1,11 @@
 import SwiftUI
 
 public struct ThankYouView: View {
-    public let showHistoryAction: (@Sendable () -> Void)?
-    public let doneAction: @Sendable () -> Void
+    // Not @Sendable: main-actor SwiftUI action closures — mutate main-actor state.
+    public let showHistoryAction: (() -> Void)?
+    public let doneAction: () -> Void
 
-    public init(showHistoryAction: (@Sendable () -> Void)?, doneAction: @escaping @Sendable () -> Void) {
+    public init(showHistoryAction: (() -> Void)?, doneAction: @escaping () -> Void) {
         self.showHistoryAction = showHistoryAction
         self.doneAction = doneAction
     }
