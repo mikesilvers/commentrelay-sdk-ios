@@ -3,9 +3,10 @@ import CommentRelayCore
 
 public struct HistoryListView: View {
     public let history: CommentRelayHistory
-    public let onSelect: @Sendable (CommentRelayHistoryEntry) -> Void
+    // Not @Sendable: main-actor SwiftUI action closure — mutates main-actor state.
+    public let onSelect: (CommentRelayHistoryEntry) -> Void
 
-    public init(history: CommentRelayHistory, onSelect: @escaping @Sendable (CommentRelayHistoryEntry) -> Void) {
+    public init(history: CommentRelayHistory, onSelect: @escaping (CommentRelayHistoryEntry) -> Void) {
         self.history = history
         self.onSelect = onSelect
     }
@@ -35,7 +36,8 @@ public struct HistoryListView: View {
 
 private struct HistoryRow: View {
     let entry: CommentRelayHistoryEntry
-    let onTap: @Sendable () -> Void
+    // Not @Sendable: SwiftUI Button action — runs on the main actor.
+    let onTap: () -> Void
 
     var body: some View {
         Button(action: onTap) {

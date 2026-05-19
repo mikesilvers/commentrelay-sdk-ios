@@ -3,7 +3,8 @@ import SwiftUI
 public struct SubmissionProgressView: View {
     public enum State {
         case inProgress(currentFile: String?)
-        case failed(message: String, retry: @Sendable () -> Void)
+        // Not @Sendable: main-actor SwiftUI action closure — retry runs on the main actor.
+        case failed(message: String, retry: () -> Void)
     }
 
     public let state: State
