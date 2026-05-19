@@ -21,14 +21,28 @@ public struct CommentRelayView: View {
         self._client = State(initialValue: CommentRelayClient(configuration: configuration))
     }
 
-    enum Route {
+    enum Route: Equatable {
         case loading
         case picker(forms: [CommentRelayForm])
         case form(form: CommentRelayForm)
         case progress(currentFile: String?)
         case progressFailed(message: String)
         case thanks(showHistory: Bool)
+        /// Submission accepted locally but NOT yet delivered to the server
+        /// (queued for retry). Must never be presented as a delivered/"thank
+        /// you" success — see CRLBS-119.
+        case queuedSaved
         case history
+    }
+
+    /// Pure mapping from a submit outcome to the screen to show. Extracted so
+    /// the queued-vs-delivered invariant is unit-testable without SwiftUI.
+    /// `.queued` MUST NOT map to `.thanks` (that falsely claims delivery).
+    static func route(for outcome: SubmitOutcome, hasUserIdentifier: Bool) -> Route {
+        switch outcome {
+        case .submitted: return .thanks(showHistory: hasUserIdentifier)
+        case .queued:    return .queuedSaved
+        }
     }
 
     public var body: some View {
@@ -103,6 +117,14 @@ public struct CommentRelayView: View {
                 showHistoryAction: showHistory ? { route = .history } : nil,
                 doneAction: { dismiss() }
             )
+        case .queuedSaved:
+            // Honest "saved, not yet delivered" state. No history action —
+            // the server has no record yet (queued locally for retry).
+            ThankYouView(
+                delivered: false,
+                showHistoryAction: nil,
+                doneAction: { Task { @MainActor in await reload() } }
+            )
         case .history:
             HistoryLoader(client: client)
         }
@@ -153,13 +175,7 @@ public struct CommentRelayView: View {
         let attachments = vm.queuedAttachments()
         do {
             let outcome = try await client.submit(submission, attachments: attachments)
-            switch outcome {
-            case .submitted:
-                route = .thanks(showHistory: configuration.userIdentifier != nil)
-            case .queued:
-                // Submission queued for retry when connectivity returns — treat as success for UX.
-                route = .thanks(showHistory: configuration.userIdentifier != nil)
-            }
+            route = Self.route(for: outcome, hasUserIdentifier: configuration.userIdentifier != nil)
         } catch let err as CommentRelayError {
             CommentRelayLoggerHolder.shared.log(level: .error, message: "submit failed", error: err)
             route = .progressFailed(message: message(for: err))

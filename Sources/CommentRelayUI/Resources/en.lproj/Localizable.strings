@@ -19,6 +19,8 @@
 "crl.thanks.body" = "Your feedback has been sent.";
 "crl.thanks.view_history" = "View past feedback";
 "crl.thanks.done" = "Done";
+"crl.queued.title" = "Saved";
+"crl.queued.body" = "Your feedback is saved and will be sent automatically when a connection is available.";
 "crl.history.title" = "Past feedback";
 "crl.history.empty_identified" = "You haven't sent any feedback yet.";
 "crl.history.empty_anonymous" = "Sign in to see your feedback history.";
