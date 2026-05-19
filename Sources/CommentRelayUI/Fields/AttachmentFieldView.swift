@@ -59,7 +59,10 @@ public struct AttachmentFieldView: FieldRenderer {
 
 private struct AttachmentRow: View {
     let attachment: PhotoAttachment
-    let onRemove: @Sendable () -> Void
+    // Not @Sendable: SwiftUI Button action — runs on the main actor and
+    // mutates the main-actor `@Binding attachments`. @Sendable wrongly
+    // forbids that and emits a strict-concurrency warning.
+    let onRemove: () -> Void
 
     var body: some View {
         HStack {
