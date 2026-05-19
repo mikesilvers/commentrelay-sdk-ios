@@ -171,6 +171,25 @@ public actor CommentRelayClient {
         try await fetchConfig(cachedHash: nil)
     }
 
+    /// Resolves a feedback form by its title, matched case-insensitively, from
+    /// the effective (cached-or-fresh) config. Only forms visible in the picker
+    /// (`isActive && showInPicker`, i.e. `CommentRelayForm.isPickerVisible`) are
+    /// eligible — a hidden or inactive form is never returned even by an exact
+    /// name match, consistent with the drop-in UI's by-name behaviour
+    /// (CRLBS-115/116). Returns `nil` when no visible form has that name.
+    /// Offline-capable: resolves from cached config; throws only when there is
+    /// no cache and the network is unavailable (same semantics as
+    /// `effectiveConfig()`).
+    public func form(named name: String) async throws -> CommentRelayForm? {
+        let needle = name.lowercased()
+        switch try await effectiveConfig() {
+        case .updated(_, let forms):
+            return forms.first { $0.isPickerVisible && $0.title.lowercased() == needle }
+        case .current:
+            return nil
+        }
+    }
+
     // MARK: - Submit (auto-queueing)
 
     /// Posts a submission to the server. Returns `.submitted` on success, or `.queued` if the
