@@ -407,6 +407,9 @@ public actor CommentRelayClient {
                 }
             } catch {
                 entry.attemptCount += 1
+                entry.lastError = "\(error)"
+                entry.lastAttemptAt = now
+                entry.errorCategory = CommentRelaySubmissionProblem.Category.unknown.rawValue
                 entry.nextEarliestAttempt = now.addingTimeInterval(
                     RetryPolicy.backoff(attempt: entry.attemptCount, retryAfter: nil))
                 try? await submissionQueue.persist(entry)
