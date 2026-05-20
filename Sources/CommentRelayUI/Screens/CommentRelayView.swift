@@ -255,12 +255,17 @@ private struct HistoryLoader: View {
 
     @MainActor private func load() async {
         problems = await client.submissionProblems()
+        // Render problems immediately while the server fetch is in flight —
+        // offline is exactly when queued problems matter most. If history
+        // resolves later it overwrites this synthesized empty value.
+        if history == nil && !problems.isEmpty {
+            history = CommentRelayHistory(isAnonymous: false, submissions: [])
+        }
         do {
             history = try await client.fetchHistory()
         } catch {
             CommentRelayLoggerHolder.shared.log(level: .error, message: "fetchHistory failed", error: error)
             serverFailed = true
-            // Show problems with an empty delivered list rather than hiding everything.
             history = CommentRelayHistory(isAnonymous: false, submissions: [])
         }
     }
