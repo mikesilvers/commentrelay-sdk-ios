@@ -123,6 +123,7 @@ actor SubmissionQueue {
     func markFailed(localId: UUID, category: String, detail: String) {
         guard var e = loadAll().first(where: { $0.localId == localId }) else { return }
         let now = Date()
+        e.attemptCount += 1     // count the terminal attempt — symmetric with .retry / generic catch in flushQueue
         e.failedAt = now
         e.lastAttemptAt = now
         e.errorCategory = category

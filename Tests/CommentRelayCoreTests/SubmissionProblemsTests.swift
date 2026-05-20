@@ -23,6 +23,7 @@ final class SubmissionProblemsTests: XCTestCase {
         XCTAssertNotNil(all.first?.lastAttemptAt)
         XCTAssertEqual(all.first?.errorCategory, "server")
         XCTAssertEqual(all.first?.lastError, #"server(message: "HTTP 500")"#)
+        XCTAssertEqual(all.first?.attemptCount, 1, "markFailed must count the terminal attempt")
         let after = await q.retryingCount
         XCTAssertEqual(after, 0)            // failed ⇒ not "retrying"
         let total = await q.count
