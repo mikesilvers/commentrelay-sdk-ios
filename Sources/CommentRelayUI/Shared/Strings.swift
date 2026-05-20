@@ -39,6 +39,26 @@ enum Strings {
     static var historyEmptyIdentified: String { string("crl.history.empty_identified") }
     static var historyEmptyAnonymous: String { string("crl.history.empty_anonymous") }
     static var historyNotesHeader: String { string("crl.history.notes_header") }
+    static var problemQueuedChip: String { string("crl.problem.queued_chip") }
+    static var problemFailedChip: String { string("crl.problem.failed_chip") }
+    static var problemTryAgain: String { string("crl.problem.try_again") }
+    static var problemRemove: String { string("crl.problem.remove") }
+    static var problemRemoveConfirmTitle: String { string("crl.problem.remove_confirm_title") }
+    static var problemRemoveConfirm: String { string("crl.problem.remove_confirm") }
+    static var problemHistoryUnavailable: String { string("crl.problem.history_unavailable") }
+    static func problemAttempts(_ n: Int) -> String {
+        String(format: string("crl.problem.attempts_format"), locale: .current, n)
+    }
+    static func friendlyError(_ c: CommentRelaySubmissionProblem.Category) -> String {
+        switch c {
+        case .rateLimited:                     return errorRateLimited
+        case .paymentRequired:                 return errorPaymentRequired
+        case .uploadFailed, .uploadUrlExpired: return errorUploadFailed
+        case .server, .transport, .forbidden,
+             .badRequest, .notFound, .decoding,
+             .conflict, .unknown:              return errorGeneric
+        }
+    }
     static var draftRestoreTitle: String { string("crl.draft.restore_title") }
     static var draftRestoreBody: String { string("crl.draft.restore_body") }
     static var draftResume: String { string("crl.draft.resume") }

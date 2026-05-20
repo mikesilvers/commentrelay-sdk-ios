@@ -208,34 +208,68 @@ public struct CommentRelayView: View {
 private struct HistoryLoader: View {
     let client: CommentRelayClient
     @State private var history: CommentRelayHistory? = nil
+    @State private var problems: [CommentRelaySubmissionProblem] = []
     @State private var selectedId: UUID? = nil
-    @State private var errorMessage: String? = nil
+    @State private var serverFailed = false
 
     var body: some View {
         Group {
             if let history {
-                HistoryListView(history: history) { entry in
-                    let eid = entry.id
-                    Task { @MainActor in selectedId = eid }
-                }
-                .navigationDestination(item: $selectedId) { entryId in
-                    if let entry = history.submissions.first(where: { $0.id == entryId }) {
-                        HistoryDetailView(entry: entry)
+                VStack(spacing: 0) {
+                    if serverFailed {
+                        Text(Strings.problemHistoryUnavailable)
+                            .font(.footnote).foregroundStyle(.secondary)
+                            .padding(.horizontal)
+                    }
+                    HistoryListView(
+                        history: history,
+                        problems: problems,
+                        onSelect: { entry in
+                            let eid = entry.id
+                            Task { @MainActor in selectedId = eid }
+                        },
+                        onRetry: { id in
+                            await client.retrySubmission(id: id)
+                            await refreshProblems()
+                        },
+                        // onRemove is sync (no spinner UX); spawn a Task so we can await the async client calls.
+                        onRemove: { id in
+                            Task {
+                                await client.deleteProblemSubmission(id: id)
+                                await refreshProblems()
+                            }
+                        }
+                    )
+                    .navigationDestination(item: $selectedId) { entryId in
+                        if let entry = history.submissions.first(where: { $0.id == entryId }) {
+                            HistoryDetailView(entry: entry)
+                        }
                     }
                 }
-            } else if let errorMessage {
-                ErrorBanner(message: errorMessage, retry: nil)
             } else {
                 LoadingView(label: nil)
             }
         }
-        .task {
-            do {
-                history = try await client.fetchHistory()
-            } catch {
-                CommentRelayLoggerHolder.shared.log(level: .error, message: "fetchHistory failed", error: error)
-                errorMessage = Strings.errorGeneric
-            }
+        .task { await load() }
+    }
+
+    @MainActor private func load() async {
+        let isAnonymous = await client.configuration.userIdentifier == nil
+        problems = await client.submissionProblems()
+        // Render problems immediately while the server fetch is in flight —
+        // offline is exactly when queued problems matter most. If history
+        // resolves later it overwrites this synthesized empty value.
+        if history == nil && !problems.isEmpty {
+            history = CommentRelayHistory(isAnonymous: isAnonymous, submissions: [])
+        }
+        do {
+            history = try await client.fetchHistory()
+        } catch {
+            CommentRelayLoggerHolder.shared.log(level: .error, message: "fetchHistory failed", error: error)
+            serverFailed = true
+            history = CommentRelayHistory(isAnonymous: isAnonymous, submissions: [])
         }
     }
+
+    @MainActor private func refreshProblems() async { problems = await client.submissionProblems() }
 }

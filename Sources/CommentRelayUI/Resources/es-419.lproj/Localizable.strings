@@ -41,3 +41,11 @@
 "crl.photo.add" = "Agregar foto";
 "crl.photo.remove" = "Eliminar";
 "crl.attachment.add" = "Agregar archivo";
+"crl.problem.queued_chip" = "En cola — se reintentará";
+"crl.problem.failed_chip" = "No se pudo enviar";
+"crl.problem.try_again" = "Reintentar";
+"crl.problem.remove" = "Eliminar";
+"crl.problem.remove_confirm_title" = "¿Eliminar estos comentarios?";
+"crl.problem.remove_confirm" = "Eliminar";
+"crl.problem.history_unavailable" = "No se pudo cargar el historial. Mostrando elementos de este dispositivo.";
+"crl.problem.attempts_format" = "Intento %lld";
