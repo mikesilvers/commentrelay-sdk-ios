@@ -13,7 +13,8 @@ enum RetryPolicy {
         case .rateLimited(let after): return .retry(after)
         case .forbidden: return .pause
         case .badRequest, .paymentRequired, .notFound, .decoding,
-             .conflict, .uploadFailed, .uploadUrlExpired:
+             .conflict, .uploadFailed, .uploadUrlExpired,
+             .unauthorized, .unexpectedStatus:
             return .terminal
         }
     }

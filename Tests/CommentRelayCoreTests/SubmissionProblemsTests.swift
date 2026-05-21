@@ -100,13 +100,15 @@ extension SubmissionProblemsTests {
         XCTAssertEqual(CommentRelaySubmissionProblem.Category(.forbidden(message: "x")), .forbidden)
         XCTAssertEqual(CommentRelaySubmissionProblem.Category(.rateLimited(retryAfter: nil)), .rateLimited)
         XCTAssertEqual(CommentRelaySubmissionProblem.Category(.badRequest(message: "x")), .badRequest)
+        XCTAssertEqual(CommentRelaySubmissionProblem.Category(.unauthorized(message: "x")), .unauthorized)
+        XCTAssertEqual(CommentRelaySubmissionProblem.Category(.unexpectedStatus(statusCode: 418, message: "x")), .unexpectedStatus)
     }
 
     func test_category_token_roundtrips_and_defaults_to_unknown() {
         let all: [CommentRelaySubmissionProblem.Category] = [
             .server, .transport, .rateLimited, .forbidden, .badRequest,
             .paymentRequired, .notFound, .decoding, .conflict,
-            .uploadFailed, .uploadUrlExpired, .unknown
+            .uploadFailed, .uploadUrlExpired, .unauthorized, .unexpectedStatus, .unknown
         ]
         for c in all {
             XCTAssertEqual(CommentRelaySubmissionProblem.Category(token: c.rawValue), c,

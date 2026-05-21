@@ -56,7 +56,7 @@ enum Strings {
         case .uploadFailed, .uploadUrlExpired: return errorUploadFailed
         case .server, .transport, .forbidden,
              .badRequest, .notFound, .decoding,
-             .conflict, .unknown:              return errorGeneric
+             .conflict, .unauthorized, .unexpectedStatus, .unknown: return errorGeneric
         }
     }
     static var draftRestoreTitle: String { string("crl.draft.restore_title") }

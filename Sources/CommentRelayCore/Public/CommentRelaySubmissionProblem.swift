@@ -9,21 +9,25 @@ public struct CommentRelaySubmissionProblem: Sendable, Equatable, Identifiable {
     public enum Category: String, Sendable, Equatable {
         case server, transport, rateLimited, forbidden, badRequest
         case paymentRequired, notFound, decoding, conflict
-        case uploadFailed, uploadUrlExpired, unknown
+        case uploadFailed, uploadUrlExpired
+        case unauthorized, unexpectedStatus
+        case unknown
 
         public init(_ error: CommentRelayError) {
             switch error {
-            case .server:          self = .server
-            case .transport:       self = .transport
-            case .rateLimited:     self = .rateLimited
-            case .forbidden:       self = .forbidden
-            case .badRequest:      self = .badRequest
-            case .paymentRequired: self = .paymentRequired
-            case .notFound:        self = .notFound
-            case .decoding:        self = .decoding
-            case .conflict:        self = .conflict
-            case .uploadFailed:    self = .uploadFailed
+            case .server:           self = .server
+            case .transport:        self = .transport
+            case .rateLimited:      self = .rateLimited
+            case .forbidden:        self = .forbidden
+            case .badRequest:       self = .badRequest
+            case .paymentRequired:  self = .paymentRequired
+            case .notFound:         self = .notFound
+            case .decoding:         self = .decoding
+            case .conflict:         self = .conflict
+            case .uploadFailed:     self = .uploadFailed
             case .uploadUrlExpired: self = .uploadUrlExpired
+            case .unauthorized:     self = .unauthorized
+            case .unexpectedStatus: self = .unexpectedStatus
             }
         }
         init(token: String?) { self = token.flatMap(Category.init(rawValue:)) ?? .unknown }
