@@ -23,4 +23,15 @@ final class ProblemStringsTests: XCTestCase {
         XCTAssertEqual(Strings.friendlyError(.transport), Strings.errorGeneric)
         XCTAssertEqual(Strings.friendlyError(.unknown), Strings.errorGeneric)
     }
+
+    func test_errorUnauthorized_resolves_non_empty() {
+        let s = Strings.errorUnauthorized
+        XCTAssertFalse(s.isEmpty)
+        XCTAssertNotEqual(s, "crl.error.unauthorized", "string did not resolve")
+    }
+
+    func test_friendlyError_maps_unauthorized_to_dedicated_message_and_unexpectedStatus_to_generic() {
+        XCTAssertEqual(Strings.friendlyError(.unauthorized), Strings.errorUnauthorized)
+        XCTAssertEqual(Strings.friendlyError(.unexpectedStatus), Strings.errorGeneric)
+    }
 }

@@ -49,3 +49,4 @@
 "crl.problem.remove_confirm" = "Eliminar";
 "crl.problem.history_unavailable" = "No se pudo cargar el historial. Mostrando elementos de este dispositivo.";
 "crl.problem.attempts_format" = "Intento %lld";
+"crl.error.unauthorized" = "Tu clave de API no está autorizada para enviar comentarios.";
