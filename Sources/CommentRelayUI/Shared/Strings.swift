@@ -54,15 +54,17 @@ enum Strings {
         case .rateLimited:                     return errorRateLimited
         case .paymentRequired:                 return errorPaymentRequired
         case .uploadFailed, .uploadUrlExpired: return errorUploadFailed
+        case .unauthorized:                    return errorUnauthorized
         case .server, .transport, .forbidden,
              .badRequest, .notFound, .decoding,
-             .conflict, .unauthorized, .unexpectedStatus, .unknown: return errorGeneric
+             .conflict, .unexpectedStatus, .unknown: return errorGeneric
         }
     }
     static var draftRestoreTitle: String { string("crl.draft.restore_title") }
     static var draftRestoreBody: String { string("crl.draft.restore_body") }
     static var draftResume: String { string("crl.draft.resume") }
     static var draftStartOver: String { string("crl.draft.start_over") }
+    static var errorUnauthorized: String { string("crl.error.unauthorized") }
     static var errorGeneric: String { string("crl.error.generic") }
     static var errorPaymentRequired: String { string("crl.error.payment_required") }
     static var errorRateLimited: String { string("crl.error.rate_limited") }

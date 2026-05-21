@@ -49,3 +49,4 @@
 "crl.problem.remove_confirm" = "Remove";
 "crl.problem.history_unavailable" = "Couldn't load past feedback. Showing items on this device.";
 "crl.problem.attempts_format" = "Attempt %lld";
+"crl.error.unauthorized" = "Your API key isn't authorized to send feedback.";

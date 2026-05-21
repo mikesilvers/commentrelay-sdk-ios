@@ -190,6 +190,7 @@ public struct CommentRelayView: View {
         case .paymentRequired: return Strings.errorPaymentRequired
         case .rateLimited: return Strings.errorRateLimited
         case .uploadFailed: return Strings.errorUploadFailed
+        case .unauthorized: return Strings.errorUnauthorized
         default: return Strings.errorGeneric
         }
     }
