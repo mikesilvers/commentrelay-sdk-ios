@@ -4,7 +4,11 @@ import CommentRelayUI
 
 struct ContentView: View {
     @State private var baseURLString = "http://localhost:3000"
-    @State private var apiKeyString = "crk_test_sample"
+    // CRLBS-123: this is a placeholder, not a real key. Replace with your own
+    // crk_test_… or crk_live_… key from your CommentRelay dashboard. Post-CRLBS-120
+    // the SDK surfaces an "API key isn't authorized" Problem row on real servers
+    // rather than silently queueing.
+    @State private var apiKeyString = "crk_test_REPLACE_ME"
     @State private var userIdentifier = ""
     @State private var formIdentifier = ""
     @State private var isFeedbackPresented = false
@@ -20,7 +24,7 @@ struct ContentView: View {
                 .font(.headline)
 
             group("Base URL", $baseURLString)
-            group("API key", $apiKeyString)
+            group("API key (replace this placeholder with your own)", $apiKeyString)
             group("User identifier (optional)", $userIdentifier)
             group("Form ID (optional — shows only that form)", $formIdentifier)
 
