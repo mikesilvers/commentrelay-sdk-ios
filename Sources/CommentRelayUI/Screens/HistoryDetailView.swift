@@ -11,8 +11,11 @@ public struct HistoryDetailView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                HStack {
+                // CRLBS-129: let a long title wrap instead of truncating; align
+                // the date to the title's first line.
+                HStack(alignment: .firstTextBaseline) {
                     Text(entry.formTitle).font(.title2).bold()
+                        .fixedSize(horizontal: false, vertical: true)
                     Spacer()
                     Text(entry.createdAt, style: .date)
                         .font(.caption)
@@ -30,7 +33,6 @@ public struct HistoryDetailView: View {
             }
             .padding()
         }
-        .navigationTitle(entry.formTitle)
     }
 }
 
