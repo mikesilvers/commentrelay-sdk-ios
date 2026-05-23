@@ -9,6 +9,7 @@ public enum ResponseLimitType: String, Codable, Sendable, Equatable {
 public struct CommentRelayForm: Codable, Sendable, Equatable, Identifiable {
     public let id: String
     public let title: String
+    public let clientFormId: String?
     public let showInPicker: Bool
     public let responseLimitCount: Int?
     public let responseLimitType: ResponseLimitType?
@@ -25,6 +26,7 @@ public struct CommentRelayForm: Codable, Sendable, Equatable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case id, title
+        case clientFormId = "client_form_id"
         case showInPicker = "show_in_picker"
         case responseLimitCount = "response_limit_count"
         case responseLimitType = "response_limit_type"

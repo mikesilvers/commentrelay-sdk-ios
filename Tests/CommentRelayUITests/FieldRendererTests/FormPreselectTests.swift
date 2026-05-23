@@ -5,9 +5,10 @@ import XCTest
 
 final class FormPreselectTests: XCTestCase {
     private func form(_ id: String, _ title: String,
-                      showInPicker: Bool = true, isActive: Bool = true) -> CommentRelayForm {
+                      showInPicker: Bool = true, isActive: Bool = true,
+                      clientFormId: String? = nil) -> CommentRelayForm {
         CommentRelayForm(
-            id: id, title: title, showInPicker: showInPicker,
+            id: id, title: title, clientFormId: clientFormId, showInPicker: showInPicker,
             responseLimitCount: nil, responseLimitType: nil, responseLimitWindowMinutes: nil,
             moreFeedbackPrompt: nil, isActive: isActive, sortOrder: 0, fields: []
         )
