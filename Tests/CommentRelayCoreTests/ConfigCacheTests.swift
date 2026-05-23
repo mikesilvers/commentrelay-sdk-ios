@@ -33,4 +33,19 @@ final class ConfigCacheTests: XCTestCase {
         XCTAssertNotNil(snap)
         XCTAssertEqual(snap?.hash, "h1")
     }
+
+    func test_discardsCache_withoutSchemaVersion() async throws {
+        // Simulates a cache written by a pre-CRLBS-128 build (no schemaVersion).
+        let legacy = Data(#"{"hash":"old","forms":[]}"#.utf8)
+        try legacy.write(to: tempDir.appendingPathComponent("config.json"), options: .atomic)
+        let snap = await ConfigCache(directory: tempDir).read()
+        XCTAssertNil(snap, "a cache without a schemaVersion must be discarded")
+    }
+
+    func test_discardsCache_withWrongSchemaVersion() async throws {
+        let future = Data(#"{"schemaVersion":999,"hash":"x","forms":[]}"#.utf8)
+        try future.write(to: tempDir.appendingPathComponent("config.json"), options: .atomic)
+        let snap = await ConfigCache(directory: tempDir).read()
+        XCTAssertNil(snap, "a cache with a mismatched schemaVersion must be discarded")
+    }
 }
