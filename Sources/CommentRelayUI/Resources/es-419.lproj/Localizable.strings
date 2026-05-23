@@ -1,4 +1,5 @@
 "crl.sheet.title" = "Comentarios";
+"crl.sheet.cancel" = "Cancelar";
 "crl.picker.title" = "¿Qué quieres compartir?";
 "crl.picker.empty" = "Los comentarios no están disponibles en este momento.";
 "crl.form.submit" = "Enviar comentarios";
@@ -18,6 +19,8 @@
 "crl.thanks.body" = "Tus comentarios han sido enviados.";
 "crl.thanks.view_history" = "Ver comentarios anteriores";
 "crl.thanks.done" = "Listo";
+"crl.queued.title" = "Guardado";
+"crl.queued.body" = "Tus comentarios se guardaron y se enviarán automáticamente cuando haya conexión.";
 "crl.history.title" = "Comentarios anteriores";
 "crl.history.empty_identified" = "Aún no has enviado comentarios.";
 "crl.history.empty_anonymous" = "Inicia sesión para ver tu historial de comentarios.";
@@ -38,3 +41,12 @@
 "crl.photo.add" = "Agregar foto";
 "crl.photo.remove" = "Eliminar";
 "crl.attachment.add" = "Agregar archivo";
+"crl.problem.queued_chip" = "En cola — se reintentará";
+"crl.problem.failed_chip" = "No se pudo enviar";
+"crl.problem.try_again" = "Reintentar";
+"crl.problem.remove" = "Eliminar";
+"crl.problem.remove_confirm_title" = "¿Eliminar estos comentarios?";
+"crl.problem.remove_confirm" = "Eliminar";
+"crl.problem.history_unavailable" = "No se pudo cargar el historial. Mostrando elementos de este dispositivo.";
+"crl.problem.attempts_format" = "Intento %lld";
+"crl.error.unauthorized" = "Tu clave de API no está autorizada para enviar comentarios.";

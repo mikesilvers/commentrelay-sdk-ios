@@ -8,11 +8,11 @@ final class OfflineConfigTests: XCTestCase {
     }
     private func client(_ s: URLSession, _ d: URL) -> CommentRelayClient {
         CommentRelayClient(configuration: CommentRelayConfiguration(
-            baseURL: URL(string: "https://example.test")!, apiKey: "k"),
+            apiKey: "k", baseURL: URL(string: "https://example.test")!),
             session: s, cacheDirectory: d, keychainService: "svc-\(UUID())")
     }
     private func form() -> CommentRelayForm {
-        CommentRelayForm(id: "a", title: "T", showInPicker: true, responseLimitCount: nil,
+        CommentRelayForm(id: "a", title: "T", clientFormId: nil, showInPicker: true, responseLimitCount: nil,
             responseLimitType: nil, responseLimitWindowMinutes: nil, moreFeedbackPrompt: nil,
             isActive: true, sortOrder: 1, fields: [])
     }

@@ -32,7 +32,10 @@ public struct ColorScaleFieldView: FieldRenderer {
 private struct ColorSwatch: View {
     let option: FieldOption
     let isSelected: Bool
-    let onTap: @Sendable () -> Void
+    // Not @Sendable: SwiftUI Button action — runs on the main actor and
+    // mutates the main-actor `@Binding selectedPosition`. @Sendable wrongly
+    // forbids that and emits a strict-concurrency warning.
+    let onTap: () -> Void
 
     var body: some View {
         Button(action: onTap) {

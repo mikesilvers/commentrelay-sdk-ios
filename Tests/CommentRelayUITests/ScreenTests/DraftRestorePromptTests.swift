@@ -3,6 +3,7 @@ import SwiftUI
 import ViewInspector
 @testable import CommentRelayUI
 
+@MainActor
 final class DraftRestorePromptTests: XCTestCase {
     func test_resumeButton_invokesClosure() throws {
         var resumed = false

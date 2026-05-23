@@ -1,4 +1,5 @@
 "crl.sheet.title" = "Feedback";
+"crl.sheet.cancel" = "Cancel";
 "crl.picker.title" = "What would you like to share?";
 "crl.picker.empty" = "Feedback isn't available right now.";
 "crl.form.submit" = "Send feedback";
@@ -18,6 +19,8 @@
 "crl.thanks.body" = "Your feedback has been sent.";
 "crl.thanks.view_history" = "View past feedback";
 "crl.thanks.done" = "Done";
+"crl.queued.title" = "Saved";
+"crl.queued.body" = "Your feedback is saved and will be sent automatically when a connection is available.";
 "crl.history.title" = "Past feedback";
 "crl.history.empty_identified" = "You haven't sent any feedback yet.";
 "crl.history.empty_anonymous" = "Sign in to see your feedback history.";
@@ -38,3 +41,12 @@
 "crl.photo.add" = "Add photo";
 "crl.photo.remove" = "Remove";
 "crl.attachment.add" = "Add attachment";
+"crl.problem.queued_chip" = "Queued — will retry";
+"crl.problem.failed_chip" = "Failed to send";
+"crl.problem.try_again" = "Try again";
+"crl.problem.remove" = "Remove";
+"crl.problem.remove_confirm_title" = "Remove this feedback?";
+"crl.problem.remove_confirm" = "Remove";
+"crl.problem.history_unavailable" = "Couldn't load past feedback. Showing items on this device.";
+"crl.problem.attempts_format" = "Attempt %lld";
+"crl.error.unauthorized" = "Your API key isn't authorized to send feedback.";

@@ -4,9 +4,10 @@ import CommentRelayCore
 
 public struct FeedbackFormView: View {
     @State public var viewModel: FeedbackFormViewModel
-    public let onSubmit: @Sendable (CommentRelaySubmission) -> Void
+    // Not @Sendable: main-actor SwiftUI action closure — mutates main-actor state.
+    public let onSubmit: (CommentRelaySubmission) -> Void
 
-    public init(viewModel: FeedbackFormViewModel, onSubmit: @escaping @Sendable (CommentRelaySubmission) -> Void) {
+    public init(viewModel: FeedbackFormViewModel, onSubmit: @escaping (CommentRelaySubmission) -> Void) {
         self._viewModel = State(initialValue: viewModel)
         self.onSubmit = onSubmit
     }
@@ -14,6 +15,14 @@ public struct FeedbackFormView: View {
     public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                // CRLBS-129: render the title in-content so it wraps to multiple
+                // lines. A large navigationTitle is single-line and truncates.
+                Text(viewModel.form.title)
+                    .font(.largeTitle).bold()
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityAddTraits(.isHeader)
+
                 if let prompt = viewModel.form.moreFeedbackPrompt {
                     Text(prompt).font(.callout).foregroundStyle(.secondary)
                 }
@@ -32,7 +41,6 @@ public struct FeedbackFormView: View {
             }
             .padding()
         }
-        .navigationTitle(viewModel.form.title)
     }
 
     @ViewBuilder

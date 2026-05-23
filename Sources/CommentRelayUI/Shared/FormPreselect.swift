@@ -17,19 +17,22 @@ enum FormPreselect: Equatable {
         }
     }
 
-    /// Matches case-insensitively on title.
+    /// Resolves the preselected form.
     ///
-    /// Only forms that would be visible in the picker (`isActive && showInPicker`)
-    /// are eligible: a preselect must never surface a form the end user is not
-    /// allowed to see, even when targeted explicitly by id or title.
+    /// `.id` is a deep link: it matches the form's UUID **or** its
+    /// `client_form_id` slug, and opens that form even when it is hidden from
+    /// the picker (`show_in_picker:false`). An inactive form is never surfaced.
+    /// `.title` stays picker-visible-only — a fuzzy title must not surface a
+    /// hidden form. (Partial reversal of CRLBS-115 for the id path only.)
     func match(in forms: [CommentRelayForm]) -> CommentRelayForm? {
-        let selectable = forms.filter { $0.isPickerVisible }
         switch self {
         case .id(let id):
-            return selectable.first { $0.id == id }
+            // An empty id matches nothing: a UUID is never empty and the API
+            // never emits an empty client_form_id (empty slugs normalize to null).
+            return forms.first { $0.isActive && ($0.id == id || $0.clientFormId == id) }
         case .title(let title):
             let needle = title.lowercased()
-            return selectable.first { $0.title.lowercased() == needle }
+            return forms.filter { $0.isPickerVisible }.first { $0.title.lowercased() == needle }
         }
     }
 }

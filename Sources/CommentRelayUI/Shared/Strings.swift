@@ -15,6 +15,7 @@ enum Strings {
 
     // Convenience accessors — one per key to catch typos at compile time.
     static var sheetTitle: String { string("crl.sheet.title") }
+    static var sheetCancel: String { string("crl.sheet.cancel") }
     static var pickerTitle: String { string("crl.picker.title") }
     static var pickerEmpty: String { string("crl.picker.empty") }
     static var formSubmit: String { string("crl.form.submit") }
@@ -32,14 +33,38 @@ enum Strings {
     static var thanksBody: String { string("crl.thanks.body") }
     static var thanksViewHistory: String { string("crl.thanks.view_history") }
     static var thanksDone: String { string("crl.thanks.done") }
+    static var queuedTitle: String { string("crl.queued.title") }
+    static var queuedBody: String { string("crl.queued.body") }
     static var historyTitle: String { string("crl.history.title") }
     static var historyEmptyIdentified: String { string("crl.history.empty_identified") }
     static var historyEmptyAnonymous: String { string("crl.history.empty_anonymous") }
     static var historyNotesHeader: String { string("crl.history.notes_header") }
+    static var problemQueuedChip: String { string("crl.problem.queued_chip") }
+    static var problemFailedChip: String { string("crl.problem.failed_chip") }
+    static var problemTryAgain: String { string("crl.problem.try_again") }
+    static var problemRemove: String { string("crl.problem.remove") }
+    static var problemRemoveConfirmTitle: String { string("crl.problem.remove_confirm_title") }
+    static var problemRemoveConfirm: String { string("crl.problem.remove_confirm") }
+    static var problemHistoryUnavailable: String { string("crl.problem.history_unavailable") }
+    static func problemAttempts(_ n: Int) -> String {
+        String(format: string("crl.problem.attempts_format"), locale: .current, n)
+    }
+    static func friendlyError(_ c: CommentRelaySubmissionProblem.Category) -> String {
+        switch c {
+        case .rateLimited:                     return errorRateLimited
+        case .paymentRequired:                 return errorPaymentRequired
+        case .uploadFailed, .uploadUrlExpired: return errorUploadFailed
+        case .unauthorized:                    return errorUnauthorized
+        case .server, .transport, .forbidden,
+             .badRequest, .notFound, .decoding,
+             .conflict, .unexpectedStatus, .unknown: return errorGeneric
+        }
+    }
     static var draftRestoreTitle: String { string("crl.draft.restore_title") }
     static var draftRestoreBody: String { string("crl.draft.restore_body") }
     static var draftResume: String { string("crl.draft.resume") }
     static var draftStartOver: String { string("crl.draft.start_over") }
+    static var errorUnauthorized: String { string("crl.error.unauthorized") }
     static var errorGeneric: String { string("crl.error.generic") }
     static var errorPaymentRequired: String { string("crl.error.payment_required") }
     static var errorRateLimited: String { string("crl.error.rate_limited") }

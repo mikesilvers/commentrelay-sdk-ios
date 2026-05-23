@@ -40,7 +40,7 @@ public actor CommentRelayClient {
     private var pendingCountContinuations: [UUID: AsyncStream<Int>.Continuation] = [:]
 
     public var pendingSubmissionCount: Int {
-        get async { await submissionQueue.count }
+        get async { await submissionQueue.retryingCount }
     }
 
     public func pendingSubmissionCountStream() -> AsyncStream<Int> {
@@ -51,7 +51,7 @@ public actor CommentRelayClient {
             continuation.onTermination = { [weak self] _ in
                 Task { await self?.removePendingContinuation(id) }
             }
-            Task { continuation.yield(await queue.count) }
+            Task { continuation.yield(await queue.retryingCount) }
         }
     }
 
@@ -60,7 +60,7 @@ public actor CommentRelayClient {
     }
 
     private func broadcastPendingCount() async {
-        let n = await submissionQueue.count
+        let n = await submissionQueue.retryingCount
         for c in pendingCountContinuations.values { c.yield(n) }
     }
 
@@ -105,6 +105,9 @@ public actor CommentRelayClient {
         }
         startFlushTriggers()
     }
+
+    /// Test-only: direct queue access for problem-visibility tests (CRLBS-121).
+    var _testQueue: SubmissionQueue { submissionQueue }
 
     // Test-only escape hatch keeping the test suite hermetic.
     init(configuration: CommentRelayConfiguration,
@@ -169,6 +172,25 @@ public actor CommentRelayClient {
     /// Cached-or-fresh forms accessor so the UI can render offline.
     public func effectiveConfig() async throws -> CommentRelayConfigResponse {
         try await fetchConfig(cachedHash: nil)
+    }
+
+    /// Resolves a feedback form by its title, matched case-insensitively, from
+    /// the effective (cached-or-fresh) config. Only forms visible in the picker
+    /// (`isActive && showInPicker`, i.e. `CommentRelayForm.isPickerVisible`) are
+    /// eligible — a hidden or inactive form is never returned even by an exact
+    /// name match, consistent with the drop-in UI's by-name behaviour
+    /// (CRLBS-115/116). Returns `nil` when no visible form has that name.
+    /// Offline-capable: resolves from cached config; throws only when there is
+    /// no cache and the network is unavailable (same semantics as
+    /// `effectiveConfig()`).
+    public func form(named name: String) async throws -> CommentRelayForm? {
+        let needle = name.lowercased()
+        switch try await effectiveConfig() {
+        case .updated(_, let forms):
+            return forms.first { $0.isPickerVisible && $0.title.lowercased() == needle }
+        case .current:
+            return nil
+        }
     }
 
     // MARK: - Submit (auto-queueing)
@@ -301,6 +323,48 @@ public actor CommentRelayClient {
         await draftStore.delete(formId: formId)
     }
 
+    // MARK: - Problem visibility (CRLBS-121)
+
+    /// Submissions that did not deliver — still queued for retry or terminally failed (CRLBS-121).
+    /// Returned sorted by creation date, most-recent first.
+    public func submissionProblems() async -> [CommentRelaySubmissionProblem] {
+        await submissionQueue.loadAll().map { e in
+            CommentRelaySubmissionProblem(
+                id: e.localId,
+                formId: e.submission.formId,
+                createdAt: e.createdAt,
+                kind: e.failedAt == nil ? .queuedRetrying : .failed,
+                category: .init(token: e.errorCategory),
+                technicalDetail: e.lastError ?? "",
+                attemptCount: e.attemptCount,
+                lastAttemptAt: e.lastAttemptAt)
+        }
+        .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    /// Re-enables a problem entry for immediate delivery. No-op if it no longer exists.
+    public func retrySubmission(id: UUID) async {
+        guard var e = await submissionQueue.loadAll().first(where: { $0.localId == id }) else { return }
+        e.failedAt = nil
+        e.nextEarliestAttempt = nil
+        do {
+            try await submissionQueue.persist(e)
+        } catch {
+            CommentRelayLoggerHolder.shared.log(level: .error,
+                message: "retrySubmission: failed to persist re-enabled queue entry", error: error)
+            return
+        }
+        await broadcastPendingCount()
+        await flushQueue()
+    }
+
+    /// Removes a problem entry — whether still retrying or terminally failed —
+    /// along with any attachment sidecars. No-op if the entry no longer exists.
+    public func deleteProblemSubmission(id: UUID) async {
+        await submissionQueue.delete(localId: id)
+        await broadcastPendingCount()
+    }
+
     // MARK: - Queue flush
 
     public func flushQueue() async {
@@ -315,6 +379,7 @@ public actor CommentRelayClient {
         let entries = await submissionQueue.loadAll()   // FIFO
         let now = Date()
         for var entry in entries {
+            if entry.failedAt != nil { continue }           // terminally failed: skip until user retries
             if let next = entry.nextEarliestAttempt, next > now { continue }
             do {
                 try await advance(&entry)
@@ -324,18 +389,27 @@ public actor CommentRelayClient {
                     await broadcastPendingCount()
                     return                                  // circuit-breaker already engaged by callee
                 case .terminal:
-                    await submissionQueue.delete(localId: entry.localId)
+                    await submissionQueue.markFailed(
+                        localId: entry.localId,
+                        category: CommentRelaySubmissionProblem.Category(err).rawValue,
+                        detail: "\(err)")
                     CommentRelayLoggerHolder.shared.log(level: .error,
-                        message: "queued submission dropped (terminal)", error: err)
+                        message: "queued submission failed (terminal, retained for History)", error: err)
+                    await broadcastPendingCount()
                 case .retry(let retryAfter):
                     entry.attemptCount += 1
                     entry.lastError = "\(err)"
+                    entry.errorCategory = CommentRelaySubmissionProblem.Category(err).rawValue
+                    entry.lastAttemptAt = now
                     entry.nextEarliestAttempt = now.addingTimeInterval(
                         RetryPolicy.backoff(attempt: entry.attemptCount, retryAfter: retryAfter))
                     try? await submissionQueue.persist(entry)
                 }
             } catch {
                 entry.attemptCount += 1
+                entry.lastError = "\(error)"
+                entry.lastAttemptAt = now
+                entry.errorCategory = CommentRelaySubmissionProblem.Category.unknown.rawValue
                 entry.nextEarliestAttempt = now.addingTimeInterval(
                     RetryPolicy.backoff(attempt: entry.attemptCount, retryAfter: nil))
                 try? await submissionQueue.persist(entry)

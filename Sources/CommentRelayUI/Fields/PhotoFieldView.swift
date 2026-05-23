@@ -74,7 +74,10 @@ public struct PhotoFieldView: FieldRenderer {
 
 private struct PhotoThumbnail: View {
     let attachment: PhotoAttachment
-    let onRemove: @Sendable () -> Void
+    // Not @Sendable: this is a SwiftUI Button action — it runs on the main
+    // actor and mutates the main-actor `@Binding attachments`. Marking it
+    // @Sendable wrongly forbids that and emits a strict-concurrency warning.
+    let onRemove: () -> Void
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
