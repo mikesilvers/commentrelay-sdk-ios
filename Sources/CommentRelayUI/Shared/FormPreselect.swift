@@ -27,6 +27,8 @@ enum FormPreselect: Equatable {
     func match(in forms: [CommentRelayForm]) -> CommentRelayForm? {
         switch self {
         case .id(let id):
+            // An empty id matches nothing: a UUID is never empty and the API
+            // never emits an empty client_form_id (empty slugs normalize to null).
             return forms.first { $0.isActive && ($0.id == id || $0.clientFormId == id) }
         case .title(let title):
             let needle = title.lowercased()
