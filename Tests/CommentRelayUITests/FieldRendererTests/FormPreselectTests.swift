@@ -82,6 +82,12 @@ final class FormPreselectTests: XCTestCase {
         XCTAssertEqual(FormPreselect.id("bug-report").match(in: forms)?.id, "uuid-1")
     }
 
+    func test_match_byId_matchesUUID_whenSlugAlsoPresent() {
+        // UUID lookup still works on a form that also carries a slug.
+        let forms = [form("uuid-1", "Bug Report", clientFormId: "bug-report")]
+        XCTAssertEqual(FormPreselect.id("uuid-1").match(in: forms)?.id, "uuid-1")
+    }
+
     func test_match_byId_opensHiddenForm_viaSlug() {
         let forms = [form("uuid-1", "Hidden", showInPicker: false, clientFormId: "secret-form")]
         XCTAssertEqual(FormPreselect.id("secret-form").match(in: forms)?.id, "uuid-1",
