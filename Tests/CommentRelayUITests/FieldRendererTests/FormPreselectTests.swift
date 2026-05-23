@@ -5,9 +5,10 @@ import XCTest
 
 final class FormPreselectTests: XCTestCase {
     private func form(_ id: String, _ title: String,
-                      showInPicker: Bool = true, isActive: Bool = true) -> CommentRelayForm {
+                      showInPicker: Bool = true, isActive: Bool = true,
+                      clientFormId: String? = nil) -> CommentRelayForm {
         CommentRelayForm(
-            id: id, title: title, showInPicker: showInPicker,
+            id: id, title: title, clientFormId: clientFormId, showInPicker: showInPicker,
             responseLimitCount: nil, responseLimitType: nil, responseLimitWindowMinutes: nil,
             moreFeedbackPrompt: nil, isActive: isActive, sortOrder: 0, fields: []
         )
@@ -53,8 +54,10 @@ final class FormPreselectTests: XCTestCase {
 
     func test_match_excludesForm_whenShowInPickerFalse() {
         let forms = [form("a", "Hidden", showInPicker: false)]
-        XCTAssertNil(FormPreselect.id("a").match(in: forms),
-                     "preselect by id must not surface a show_in_picker:false form")
+        // CRLBS-127: an explicit id is now a deep link — it opens a hidden but
+        // active form. Title preselect still must not.
+        XCTAssertEqual(FormPreselect.id("a").match(in: forms)?.id, "a",
+                       "preselect by id deep-links a show_in_picker:false form")
         XCTAssertNil(FormPreselect.title("Hidden").match(in: forms),
                      "preselect by title must not surface a show_in_picker:false form")
     }
@@ -72,5 +75,33 @@ final class FormPreselectTests: XCTestCase {
             form("visible", "Feedback", showInPicker: true),
         ]
         XCTAssertEqual(FormPreselect.title("feedback").match(in: forms)?.id, "visible")
+    }
+
+    func test_match_byId_matchesClientFormIdSlug() {
+        let forms = [form("uuid-1", "Bug Report", clientFormId: "bug-report")]
+        XCTAssertEqual(FormPreselect.id("bug-report").match(in: forms)?.id, "uuid-1")
+    }
+
+    func test_match_byId_matchesUUID_whenSlugAlsoPresent() {
+        // UUID lookup still works on a form that also carries a slug.
+        let forms = [form("uuid-1", "Bug Report", clientFormId: "bug-report")]
+        XCTAssertEqual(FormPreselect.id("uuid-1").match(in: forms)?.id, "uuid-1")
+    }
+
+    func test_match_byId_opensHiddenForm_viaSlug() {
+        let forms = [form("uuid-1", "Hidden", showInPicker: false, clientFormId: "secret-form")]
+        XCTAssertEqual(FormPreselect.id("secret-form").match(in: forms)?.id, "uuid-1",
+                       "an explicit slug must deep-link a show_in_picker:false form")
+    }
+
+    func test_match_byId_opensHiddenForm_viaUUID() {
+        let forms = [form("uuid-1", "Hidden", showInPicker: false)]
+        XCTAssertEqual(FormPreselect.id("uuid-1").match(in: forms)?.id, "uuid-1")
+    }
+
+    func test_match_byId_doesNotOpenInactiveForm() {
+        let forms = [form("uuid-1", "Inactive", isActive: false, clientFormId: "x")]
+        XCTAssertNil(FormPreselect.id("uuid-1").match(in: forms))
+        XCTAssertNil(FormPreselect.id("x").match(in: forms))
     }
 }

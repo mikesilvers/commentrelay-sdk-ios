@@ -17,7 +17,7 @@ final class ConfigCacheTests: XCTestCase {
 
     func test_writeThenReadRoundTrip() async throws {
         let cache = ConfigCache(directory: tempDir)
-        let form = CommentRelayForm(id: "f1", title: "Bug", showInPicker: true, responseLimitCount: nil, responseLimitType: nil, responseLimitWindowMinutes: nil, moreFeedbackPrompt: nil, isActive: true, sortOrder: 1, fields: [])
+        let form = CommentRelayForm(id: "f1", title: "Bug", clientFormId: nil, showInPicker: true, responseLimitCount: nil, responseLimitType: nil, responseLimitWindowMinutes: nil, moreFeedbackPrompt: nil, isActive: true, sortOrder: 1, fields: [])
         await cache.write(hash: "abc", forms: [form])
         let snap = await cache.read()
         XCTAssertNotNil(snap)

@@ -100,7 +100,8 @@ struct SettingsView: View {
 }
 ```
 
-Jump straight to one form (skips the picker) with `formId:` or `formTitle:`:
+Jump straight to one form (skips the picker) with `formId:` or `formTitle:`.
+`formId:` accepts the form's UUID **or** its `client_form_id` slug:
 
 ```swift
 .commentRelaySheet(isPresented: $showFeedback,
@@ -108,8 +109,9 @@ Jump straight to one form (skips the picker) with `formId:` or `formTitle:`:
                     formTitle: "Bug Report")
 ```
 
-A form that is inactive or not marked “show in picker” is never surfaced —
-including via `formId`/`formTitle` preselect.
+An **inactive** form is never surfaced. `formId:` (UUID or `client_form_id`
+slug) opens that exact form even if it is hidden from the picker — a deep link.
+`formTitle:` only matches a form that is shown in the picker.
 
 Need to embed it yourself (custom presentation, navigation push, etc.) instead
 of a sheet? Use the view directly:

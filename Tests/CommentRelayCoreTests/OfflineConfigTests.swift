@@ -12,7 +12,7 @@ final class OfflineConfigTests: XCTestCase {
             session: s, cacheDirectory: d, keychainService: "svc-\(UUID())")
     }
     private func form() -> CommentRelayForm {
-        CommentRelayForm(id: "a", title: "T", showInPicker: true, responseLimitCount: nil,
+        CommentRelayForm(id: "a", title: "T", clientFormId: nil, showInPicker: true, responseLimitCount: nil,
             responseLimitType: nil, responseLimitWindowMinutes: nil, moreFeedbackPrompt: nil,
             isActive: true, sortOrder: 1, fields: [])
     }
