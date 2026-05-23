@@ -10,6 +10,11 @@ public struct CommentRelayView: View {
     @State private var client: CommentRelayClient
     @State private var activeViewModel: FeedbackFormViewModel? = nil
     @State private var pendingCount = 0
+    // CRLBS-130: load config exactly once per sheet session (a spurious .task
+    // re-fire must not re-run loadForms and bounce the user back into a form),
+    // and remember once a submission succeeded so the preselect isn't reapplied.
+    @State private var didLoad = false
+    @State private var submitted = false
 
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.dismiss) private var dismiss
@@ -70,6 +75,8 @@ public struct CommentRelayView: View {
                     }
                 }
                 .task {
+                    guard !didLoad else { return }
+                    didLoad = true
                     await loadForms()
                 }
         }
@@ -144,7 +151,7 @@ public struct CommentRelayView: View {
             case .current:
                 route = .picker(forms: [])
             case .updated(_, let forms):
-                if let preselect, let match = preselect.match(in: forms) {
+                if !submitted, let preselect, let match = preselect.match(in: forms) {
                     let vm = FeedbackFormViewModel(
                         form: match,
                         userIdentifier: configuration.userIdentifier ?? "anonymous",
@@ -175,6 +182,9 @@ public struct CommentRelayView: View {
         let attachments = vm.queuedAttachments()
         do {
             let outcome = try await client.submit(submission, attachments: attachments)
+            // CRLBS-130: consume the preselect so an already-submitted form is
+            // never auto-reopened (e.g. queued Done -> reload, or a .task re-run).
+            submitted = true
             route = Self.route(for: outcome, hasUserIdentifier: configuration.userIdentifier != nil)
         } catch let err as CommentRelayError {
             CommentRelayLoggerHolder.shared.log(level: .error, message: "submit failed", error: err)
