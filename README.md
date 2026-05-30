@@ -72,6 +72,13 @@ Full options (all after `apiKey` have defaults):
 | `maxQueuedSubmissions` | `50` | FIFO cap on the offline queue. |
 | `maxQueueAge` | `30 days` | Queued entries older than this are pruned. |
 
+### Attribution (free tier)
+
+Projects on the Free tier show a subtle "Powered by CommentRelay" link at the
+bottom of the feedback widget. It is controlled entirely by the server (the SDK
+shows it only when the config endpoint enables it) and is automatically hidden
+on paid tiers. No client configuration is required.
+
 > The SDK never hardcodes secrets — supply the API key from your own config/keychain.
 
 ---
