@@ -19,6 +19,7 @@
 "crl.thanks.body" = "Your feedback has been sent.";
 "crl.thanks.view_history" = "View past feedback";
 "crl.thanks.done" = "Done";
+"crl.powered_by" = "Powered by CommentRelay";
 "crl.queued.title" = "Saved";
 "crl.queued.body" = "Your feedback is saved and will be sent automatically when a connection is available.";
 "crl.history.title" = "Past feedback";
