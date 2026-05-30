@@ -81,4 +81,18 @@ final class FeedbackFormViewTests: XCTestCase {
         let submit2 = try sut.inspect().find(button: Strings.formSubmit)
         XCTAssertFalse(submit2.isDisabled())
     }
+
+    func test_view_constructsWithAttribution_andExposesResolvedLink() {
+        let url = URL(string: "https://api.commentrelay.com/r/powered-by?p=p1")!
+        let raw = #"{"id":"f1","title":"T","client_form_id":null,"show_in_picker":true,"response_limit_count":null,"response_limit_type":null,"response_limit_window_minutes":null,"more_feedback_prompt":null,"is_active":true,"sort_order":0,"fields":[]}"#
+        let f = try! JSONDecoder().decode(CommentRelayForm.self, from: Data(raw.utf8))
+        let vm = FeedbackFormViewModel(form: f, userIdentifier: "u",
+                                       platform: .ios, sdkVersion: "1.0.0")
+        let shown = CommentRelayAttribution(showAttribution: true, attributionURL: url)
+        let view = FeedbackFormView(viewModel: vm, attribution: shown) { _ in }
+        XCTAssertEqual(view.attribution.resolvedLink, url)
+
+        let plain = FeedbackFormView(viewModel: vm) { _ in }
+        XCTAssertNil(plain.attribution.resolvedLink)
+    }
 }

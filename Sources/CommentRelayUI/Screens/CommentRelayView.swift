@@ -10,6 +10,7 @@ public struct CommentRelayView: View {
     @State private var client: CommentRelayClient
     @State private var activeViewModel: FeedbackFormViewModel? = nil
     @State private var pendingCount = 0
+    @State private var attribution: CommentRelayAttribution = .hidden
     // CRLBS-130: load config exactly once per sheet session (a spurious .task
     // re-fire must not re-run loadForms and bounce the user back into a form),
     // and remember once a submission succeeded so the preselect isn't reapplied.
@@ -107,7 +108,7 @@ public struct CommentRelayView: View {
             }
         case .form:
             if let vm = activeViewModel {
-                FeedbackFormView(viewModel: vm) { submission in
+                FeedbackFormView(viewModel: vm, attribution: attribution) { submission in
                     Task { @MainActor in await submitWithViewModel(submission) }
                 }
             } else {
@@ -147,7 +148,9 @@ public struct CommentRelayView: View {
 
     private func loadForms() async {
         do {
-            switch try await client.fetchConfig(cachedHash: nil) {
+            let configResult = try await client.fetchConfig(cachedHash: nil)
+            attribution = await client.attribution()
+            switch configResult {
             case .current:
                 route = .picker(forms: [])
             case .updated(_, let forms):
