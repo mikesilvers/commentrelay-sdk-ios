@@ -19,5 +19,17 @@ public struct CommentRelayAttribution: Sendable, Equatable {
 
     /// The link to present, or `nil` when attribution must be hidden. Single
     /// source of truth for the gating rule so the view and tests can't disagree.
-    public var resolvedLink: URL? { showAttribution ? attributionURL : nil }
+    ///
+    /// Only `https` links with a non-empty host are surfaced. A non-https scheme
+    /// (e.g. `http`, or a hostile `javascript:`/custom scheme) is rejected at this
+    /// trust boundary so a malformed or hostile config value can never escalate
+    /// the SwiftUI `Link` sink to an arbitrary scheme (CRLBS-132 security review).
+    public var resolvedLink: URL? {
+        guard showAttribution,
+              let url = attributionURL,
+              url.scheme?.lowercased() == "https",
+              let host = url.host, !host.isEmpty
+        else { return nil }
+        return url
+    }
 }

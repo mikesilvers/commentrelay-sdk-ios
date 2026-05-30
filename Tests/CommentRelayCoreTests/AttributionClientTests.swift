@@ -58,4 +58,35 @@ final class AttributionClientTests: XCTestCase {
         let attr = await client.attribution()
         XCTAssertEqual(attr, .hidden)
     }
+
+    func test_attribution_updatesOnCurrentResponse() async throws {
+        MockURLProtocol.handler = { req in
+            let resp = HTTPURLResponse(url: req.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (resp, Data(#"{"current":true,"show_attribution":true,"attribution_url":"https://api.example.com/r/powered-by?p=c"}"#.utf8))
+        }
+        let client = makeClient()
+        _ = try await client.fetchConfig(cachedHash: nil)
+        let attr = await client.attribution()
+        XCTAssertEqual(attr.resolvedLink,
+                       URL(string: "https://api.example.com/r/powered-by?p=c"))
+    }
+
+    func test_attribution_retainedAcrossTransportFailure() async throws {
+        // First fetch succeeds with attribution and writes a config cache.
+        MockURLProtocol.handler = { req in
+            let resp = HTTPURLResponse(url: req.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (resp, Data(#"{"current":false,"hash":"h","forms":[],"show_attribution":true,"attribution_url":"https://api.example.com/r/powered-by?p=p"}"#.utf8))
+        }
+        let client = makeClient()
+        _ = try await client.fetchConfig(cachedHash: nil)
+        XCTAssertTrue(await client.attribution().showAttribution)
+
+        // Second fetch fails at the transport layer: fetchConfig falls back to the
+        // cached snapshot and must NOT blank the retained attribution.
+        MockURLProtocol.handler = { _ in throw URLError(.notConnectedToInternet) }
+        _ = try await client.fetchConfig(cachedHash: nil)
+        let after = await client.attribution()
+        XCTAssertEqual(after.resolvedLink,
+                       URL(string: "https://api.example.com/r/powered-by?p=p"))
+    }
 }
