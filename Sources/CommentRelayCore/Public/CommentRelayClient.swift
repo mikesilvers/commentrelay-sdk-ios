@@ -12,6 +12,10 @@ public actor CommentRelayClient {
     nonisolated(unsafe) private var uploadManager: BackgroundUploadManager!
     private(set) public var isEnabled: Bool = true
 
+    /// Latest project-level attribution from the most recent successful config
+    /// fetch (CRLBS-132). Defaults to hidden; retained across transport failures.
+    private var latestAttribution: CommentRelayAttribution = .hidden
+
     // MARK: - Reachability / flush triggers
 
     private let reachability: Reachability
@@ -147,9 +151,11 @@ public actor CommentRelayClient {
         let basePath = "sdk/v1/config"
         let queryItems: [URLQueryItem]? = effectiveHash.map { [URLQueryItem(name: "hash", value: $0)] }
         do {
-            let response: CommentRelayConfigResponse = try await api.send(
+            let decoded: DecodedConfigResponse = try await api.send(
                 method: "GET", path: basePath, queryItems: queryItems,
-                decodingAs: CommentRelayConfigResponse.self)
+                decodingAs: DecodedConfigResponse.self)
+            let response = decoded.response
+            latestAttribution = decoded.attribution
             if case .updated(let hash, let forms) = response {
                 await configCache.write(hash: hash, forms: forms)
             }
@@ -168,6 +174,10 @@ public actor CommentRelayClient {
             throw err
         }
     }
+
+    /// The latest "Powered by CommentRelay" attribution state (CRLBS-132).
+    /// Reflects the most recent config fetch; hidden until one succeeds.
+    public func attribution() -> CommentRelayAttribution { latestAttribution }
 
     /// Cached-or-fresh forms accessor so the UI can render offline.
     public func effectiveConfig() async throws -> CommentRelayConfigResponse {
