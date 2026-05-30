@@ -59,3 +59,27 @@ extension CommentRelayConfigResponse: Decodable {
         }
     }
 }
+
+/// Full decode of `GET /sdk/v1/config` (CRLBS-132): the forms response plus
+/// project-level attribution. Attribution rides the envelope top-level on every
+/// response (both `current` and `updated`) so it stays fresh independent of the
+/// forms hash. `attribution_url` is decoded leniently — a malformed value maps
+/// to `nil` rather than failing the whole config decode.
+struct DecodedConfigResponse: Decodable {
+    let response: CommentRelayConfigResponse
+    let attribution: CommentRelayAttribution
+
+    private enum CodingKeys: String, CodingKey {
+        case showAttribution = "show_attribution"
+        case attributionURL = "attribution_url"
+    }
+
+    init(from decoder: Decoder) throws {
+        response = try CommentRelayConfigResponse(from: decoder)
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let show = try c.decodeIfPresent(Bool.self, forKey: .showAttribution) ?? false
+        let urlString = try c.decodeIfPresent(String.self, forKey: .attributionURL)
+        let url = urlString.flatMap(URL.init(string:))
+        attribution = CommentRelayAttribution(showAttribution: show, attributionURL: url)
+    }
+}
