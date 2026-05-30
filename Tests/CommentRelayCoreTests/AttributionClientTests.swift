@@ -79,7 +79,8 @@ final class AttributionClientTests: XCTestCase {
         }
         let client = makeClient()
         _ = try await client.fetchConfig(cachedHash: nil)
-        XCTAssertTrue(await client.attribution().showAttribution)
+        let first = await client.attribution()
+        XCTAssertTrue(first.showAttribution)
 
         // Second fetch fails at the transport layer: fetchConfig falls back to the
         // cached snapshot and must NOT blank the retained attribution.
