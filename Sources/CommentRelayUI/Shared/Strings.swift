@@ -33,6 +33,7 @@ enum Strings {
     static var thanksBody: String { string("crl.thanks.body") }
     static var thanksViewHistory: String { string("crl.thanks.view_history") }
     static var thanksDone: String { string("crl.thanks.done") }
+    static var poweredBy: String { string("crl.powered_by") }
     static var queuedTitle: String { string("crl.queued.title") }
     static var queuedBody: String { string("crl.queued.body") }
     static var historyTitle: String { string("crl.history.title") }

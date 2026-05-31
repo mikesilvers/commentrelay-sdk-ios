@@ -4,11 +4,16 @@ import CommentRelayCore
 
 public struct FeedbackFormView: View {
     @State public var viewModel: FeedbackFormViewModel
+    /// CRLBS-132: free-tier attribution to render under the submit button.
+    public let attribution: CommentRelayAttribution
     // Not @Sendable: main-actor SwiftUI action closure — mutates main-actor state.
     public let onSubmit: (CommentRelaySubmission) -> Void
 
-    public init(viewModel: FeedbackFormViewModel, onSubmit: @escaping (CommentRelaySubmission) -> Void) {
+    public init(viewModel: FeedbackFormViewModel,
+                attribution: CommentRelayAttribution = .hidden,
+                onSubmit: @escaping (CommentRelaySubmission) -> Void) {
         self._viewModel = State(initialValue: viewModel)
+        self.attribution = attribution
         self.onSubmit = onSubmit
     }
 
@@ -38,6 +43,8 @@ public struct FeedbackFormView: View {
                 .buttonStyle(.borderedProminent)
                 .frame(maxWidth: .infinity)
                 .disabled(!viewModel.isSubmittable)
+
+                PoweredByFooter(attribution: attribution)
             }
             .padding()
         }
