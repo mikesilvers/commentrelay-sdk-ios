@@ -37,6 +37,14 @@ final class CommentRelayConfigurableButtonTests: XCTestCase {
         XCTAssertThrowsError(try sut.inspect().find(text: "Feedback"))
     }
 
+    func test_round_iconOnly_emptyTitle_rendersImageAndButton() throws {
+        // Icon-only round button (no title): renders the image and a tappable button, and does
+        // not force an empty VoiceOver label over the SF Symbol's synthesized one.
+        let sut = CommentRelayConfigurableButton(shape: .round, systemImage: "bubble.left") {}
+        XCTAssertNoThrow(try sut.inspect().find(ViewType.Image.self))
+        XCTAssertNoThrow(try sut.inspect().find(ViewType.Button.self))
+    }
+
     func test_tap_invokesAction() throws {
         var tapped = false
         let sut = CommentRelayConfigurableButton("Send", shape: .capsule) { tapped = true }

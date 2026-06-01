@@ -107,9 +107,11 @@ public struct CommentRelayConfigurableButton: View {
         case .capsule:
             titleLabel
                 .background(Capsule().fill(fillColor))
+                .contentShape(Capsule())
         case .oval:
             titleLabel
                 .background(Ellipse().fill(fillColor))
+                .contentShape(Ellipse())
         }
     }
 
@@ -124,8 +126,9 @@ public struct CommentRelayConfigurableButton: View {
 
     /// Fixed-diameter circle holding an SF Symbol or, failing that, the title's first character.
     /// VoiceOver still reads `title` when the visible content is icon-only.
+    @ViewBuilder
     private var roundContent: some View {
-        Group {
+        let circle = Group {
             if let systemImage {
                 Image(systemName: systemImage)
                     .font(size.font)
@@ -137,6 +140,15 @@ public struct CommentRelayConfigurableButton: View {
         .foregroundStyle(.white)
         .frame(width: size.roundDiameter, height: size.roundDiameter)
         .background(Circle().fill(fillColor))
-        .accessibilityLabel(title.isEmpty ? Text("") : Text(title))
+        .contentShape(Circle())
+
+        // Apply an explicit VoiceOver label only when there's a title. Setting an
+        // empty string would override the SF Symbol's own synthesized label and
+        // leave an icon-only button unlabeled.
+        if title.isEmpty {
+            circle
+        } else {
+            circle.accessibilityLabel(Text(title))
+        }
     }
 }
