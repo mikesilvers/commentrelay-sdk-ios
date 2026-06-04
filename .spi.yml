@@ -1,6 +1,7 @@
+# Swift Package Index manifest.
+# https://swiftpackageindex.com/swiftpackageindex/spimanifest/documentation/spimanifest/commonusecases
 version: 1
 builder:
   configs:
-    - documentation_targets:
-        - CommentRelayCore
-        - CommentRelayUI
+    # Build & host the DocC documentation for both libraries on the Swift Package Index.
+    - documentation_targets: [CommentRelayCore, CommentRelayUI]

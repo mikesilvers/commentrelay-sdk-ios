@@ -1,5 +1,8 @@
 # CommentRelay iOS SDK
 
+[![Swift versions](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmikesilvers%2Fcommentrelay-sdk-ios%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/mikesilvers/commentrelay-sdk-ios)
+[![Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmikesilvers%2Fcommentrelay-sdk-ios%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/mikesilvers/commentrelay-sdk-ios)
+
 Drop‑in feedback collection for iOS & macOS apps. Present a ready‑made feedback
 UI in one line, or drive the API directly. Submissions are delivered reliably —
 including offline, with automatic retry.
