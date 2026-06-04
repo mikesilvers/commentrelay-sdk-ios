@@ -4,6 +4,8 @@ Drop‑in feedback collection for iOS & macOS apps. Present a ready‑made feedb
 UI in one line, or drive the API directly. Submissions are delivered reliably —
 including offline, with automatic retry.
 
+**[commentrelay.com](https://commentrelay.com)** · **[Dashboard & API keys](https://app.commentrelay.com)**
+
 **Requirements:** iOS 18+ / macOS 15+ · Xcode 16+ (Swift 6 tools) · SwiftPM
 
 The package vends two libraries:
@@ -12,6 +14,43 @@ The package vends two libraries:
 |---|---|
 | `CommentRelayUI` | The drop‑in SwiftUI feedback experience (form picker → form → submit → history). Depends on Core. |
 | `CommentRelayCore` | Configuration, the `CommentRelayClient` API actor, and models. Use directly for a custom UI or headless submission. |
+
+---
+
+## Quickstart (60 seconds)
+
+**1. Add the package.** In Xcode: File → Add Package Dependencies… → paste the URL (or add it to `Package.swift`):
+
+```
+https://github.com/mikesilvers/commentrelay-sdk-ios.git
+```
+
+Add the **CommentRelayUI** library to your app target.
+
+**2. Get your project API key** (`crk_live_…`) from your [CommentRelay dashboard](https://app.commentrelay.com).
+
+**3. Drop the feedback button into any view:**
+
+```swift
+import SwiftUI
+import CommentRelayCore
+import CommentRelayUI
+
+struct ContentView: View {
+    @State private var showFeedback = false
+    private let config = CommentRelayConfiguration(apiKey: "crk_live_yourprojectkey")
+
+    var body: some View {
+        Button("Send feedback") { showFeedback = true }
+            .commentRelaySheet(isPresented: $showFeedback, configuration: config)
+    }
+}
+```
+
+That's the whole integration. The SDK loads your project's feedback forms, collects
+submissions (photos, offline queueing, and per‑user history included), and delivers
+them to your dashboard. The sections below go deeper — configuration options, the
+drop‑in UI, and the headless API.
 
 ---
 
@@ -248,3 +287,14 @@ swift test
 
 Versioning is SemVer; the SDK reports its version to the API as `sdk_version`
 (see `CommentRelay.version`).
+
+---
+
+## Links
+
+- **Website:** [commentrelay.com](https://commentrelay.com) — what CommentRelay is, pricing, and sign‑up
+- **Dashboard & API keys:** [app.commentrelay.com](https://app.commentrelay.com) — create a project and grab your `crk_live_…` key
+- **Source & issues:** this repository
+
+CommentRelay is the drop‑in feedback system you don't have to build — for iOS &
+macOS today, with web and Android on the way.
