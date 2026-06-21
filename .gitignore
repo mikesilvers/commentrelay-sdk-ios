@@ -22,3 +22,7 @@ build/
 
 # Superpowers brainstorm workspace
 .superpowers/
+
+# Internal design docs / AI working files — live in the private monorepo only
+docs/
+.ai/
