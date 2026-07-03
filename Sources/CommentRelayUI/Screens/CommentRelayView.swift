@@ -146,6 +146,23 @@ public struct CommentRelayView: View {
         await loadForms()
     }
 
+    /// Seeds a form's view model from a previously saved draft (if any), so host-app-provided
+    /// context written via `CommentRelayClient.saveDraft(formId:fieldValues:)` prefills the form when it
+    /// opens. Draft field values are keyed by field id; only non-empty text values are applied, and
+    /// existing entries are overwritten by the draft (last-write-wins, matching the draft's intent).
+    @MainActor private func applyDraft(formId: String, to vm: FeedbackFormViewModel) async {
+        Self.seed(vm, from: await client.loadDraft(formId: formId))
+    }
+
+    /// Applies a saved draft's non-empty text values onto a form view model (pure; unit-testable
+    /// without SwiftUI, like `route(for:)`). Draft values are keyed by field id; last-write-wins.
+    static func seed(_ vm: FeedbackFormViewModel, from draft: CommentRelayDraft?) {
+        guard let draft else { return }
+        for (fieldId, value) in draft.fieldValues where !value.isEmpty {
+            vm.textValues[fieldId] = value
+        }
+    }
+
     private func loadForms() async {
         do {
             let configResult = try await client.fetchConfig(cachedHash: nil)
@@ -161,6 +178,12 @@ public struct CommentRelayView: View {
                         platform: Platform.current,
                         sdkVersion: configuration.effectiveSDKVersion
                     )
+                    // Restore a saved draft so host-app-seeded context (via `saveDraft`) prefills the
+                    // form. Load by the caller's deep-link id (the exact key `saveDraft` used) — NOT the
+                    // resolved form's UUID, which a slug-keyed draft would never match.
+                    if case .id(let draftKey) = preselect {
+                        await applyDraft(formId: draftKey, to: vm)
+                    }
                     activeViewModel = vm
                     route = .form(form: match)
                 } else {
