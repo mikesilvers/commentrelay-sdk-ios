@@ -30,8 +30,20 @@ public final class FeedbackFormViewModel {
     }
     public func setPhotos(_ fieldId: String, _ value: [PhotoAttachment]) { photoValues[fieldId] = value }
 
+    /// IDs of the fields the user can currently see, per `visibleFields` — i.e. root fields plus the
+    /// children of any true/false gate that is switched on.
+    ///
+    /// Validation and submission MUST both be scoped to this set. Rendering already was; when the other
+    /// two were not, a form with a *required* child under an *off* gate was permanently unsubmittable,
+    /// because the blocking field was invisible and could not be filled. That is not a hypothetical —
+    /// it shipped, and made both of CrimeCode's feedback forms impossible to send.
+    private var visibleFieldIds: Set<String> {
+        Set(visibleFields(in: form.fields, boolValues: boolValues).map(\.field.id))
+    }
+
     public var isSubmittable: Bool {
-        for field in form.fields where field.isRequired {
+        let visible = visibleFieldIds
+        for field in form.fields where field.isRequired && visible.contains(field.id) {
             switch field.fieldType {
             case .textbox, .email, .phone, .numeric:
                 let v = textValues[field.id] ?? ""
@@ -59,7 +71,11 @@ public final class FeedbackFormViewModel {
 
     public func buildSubmission() -> CommentRelaySubmission {
         var fieldValues: [CommentRelaySubmission.FieldValue] = []
-        for field in form.fields.sorted(by: { $0.sortOrder < $1.sortOrder }) {
+        // Only submit what the user can see. Values entered under a gate that was later switched back off
+        // have been WITHDRAWN, and transmitting them anyway would send data the user deliberately
+        // retracted — typically the contact details behind a "do you want us to contact you" toggle.
+        let visible = visibleFieldIds
+        for field in form.fields.sorted(by: { $0.sortOrder < $1.sortOrder }) where visible.contains(field.id) {
             switch field.fieldType {
             case .textbox, .email, .phone, .numeric:
                 let v = textValues[field.id] ?? ""
